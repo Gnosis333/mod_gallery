@@ -2,7 +2,6 @@
   "name": "beach-day",
   "version": "0.1.0",
   "description": "A tall top-down beach pane: gentle waves wash the shore, people in sunglasses lie on sunbeds under parasols, and swimmers float on rings, a pink unicorn among them. While Claude works a jet ski and a banana boat run past.",
-  "types": "./types/index.d.ts",
   "author": {
     "name": "Gnosis333"
   },

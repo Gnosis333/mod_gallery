@@ -2,7 +2,6 @@
   "name": "snow-cabin",
   "version": "0.1.0",
   "description": "A tall snowy-cabin pane: snow falls softly on a white forest below snowy peaks, and a white rabbit, a white fox and a magpie come by. While Claude works night falls, the chimney smokes, the windows glow and snowmen appear one by one.",
-  "types": "./types/index.d.ts",
   "author": {
     "name": "Gnosis333"
   },

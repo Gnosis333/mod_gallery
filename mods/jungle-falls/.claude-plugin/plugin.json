@@ -2,7 +2,6 @@
   "name": "jungle-falls",
   "version": "0.2.0",
   "description": "A tall jungle pane: terraced waterfalls wind down into a lily pool, and animals drop by at random - toucans, parrots, a swinging monkey, a jaguar, a crocodile, a frog, butterflies, a sloth.",
-  "types": "./types/index.d.ts",
   "author": {
     "name": "Gnosis333"
   },

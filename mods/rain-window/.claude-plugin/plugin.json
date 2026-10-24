@@ -2,7 +2,6 @@
   "name": "rain-window",
   "version": "0.1.0",
   "description": "A tall rainy-window pane: drops run down the glass and merge, blurred city lights glow outside and a cat dozes on the sill. While Claude works the rain pours and lightning flashes; when it is done a rainbow comes out.",
-  "types": "./types/index.d.ts",
   "author": {
     "name": "Gnosis333"
   },
