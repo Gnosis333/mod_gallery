@@ -1,5 +1,9 @@
 # Claude Code Mod Gallery
 
+<img src="images/hero-en.gif" alt="Claude Code on the left works through a task while the reef-tank pane on the right dims and a submarine comes down" width="720">
+
+*Hand Claude Code a task, and zone out at the fish while it works.* (The chat window here is a mock-up; the tank is the real mod.)
+
 Animated side panels for Claude Code that change when Claude is **idle** vs. **working**, plus two small prompt bands. I'm learning Claude Code mods by building things, and this is what came out so far.
 
 > Every scene is a hand-written SVG animation (no image files). The previews below are the real pictures, captured with the idle state on the **left** and the working state on the **right** (an 8-second loop).
@@ -162,6 +166,10 @@ Built with [Claude Code](https://claude.com/claude-code).
 ---
 
 ## 한국어
+
+<img src="images/hero-ko.gif" alt="왼쪽 Claude Code가 일하는 동안 오른쪽 어항 패널이 어두워지고 잠수함이 내려오는 모습" width="720">
+
+*Claude Code에 일을 맡기고, 일하는 동안엔 어항 보며 멍~* (왼쪽 대화창은 비슷하게 그린 화면이고, 어항은 실제 모드입니다.)
 
 Claude Code 옆에 띄워 두는 **그림 패널**과 입력창 위 **상태 띠**를 모았습니다. 패널은 Claude가 쉬고 있을 때와 일하고 있을 때 모습이 달라집니다. Claude Code의 모드를 공부하면서 이것저것 만들어 본 결과물입니다. 위 영어 부분의 그림(왼쪽 쉬는 중, 오른쪽 작업 중)이 그대로 해당합니다.
 
