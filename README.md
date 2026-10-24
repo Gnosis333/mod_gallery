@@ -141,3 +141,7 @@ Haiku 모델이 선택돼 있으면 입력창 위에 빨간 경고를 띄워 복
 - **직접 써 보기**: 한 모드만 시험하려면 `claude --plugin-dir mods/night-train`처럼 폴더를 지정해 시작할 수도 있습니다.
 
 모두 [Claude Code](https://claude.com/claude-code)로 만들었습니다.
+
+## 라이선스
+
+[MIT](LICENSE). 누구나 자유롭게 쓰고, 고치고, 다시 배포해도 됩니다.
