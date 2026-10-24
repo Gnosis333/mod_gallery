@@ -48,9 +48,9 @@ const rnd = (s: number) => {
 const glow = (x: number, y: number, r: number, s: number) =>
   `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffe9a8" opacity=".3"><animate attributeName="opacity" values=".16;.42;.16" dur="${3 + (s % 4)}s" begin="${-(s % 5)}s" repeatCount="indefinite"/></circle>`
 
-const frame = (x: number, y: number, w: number, h: number, c: string) =>
-  `<rect x="${x - 1.5}" y="${y - 1.5}" width="${w + 3}" height="${h + 3}" fill="#8b6b45"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>` +
-  `<path d="M${x} ${y + h} l${w * 0.35} ${-h * 0.5} l${w * 0.25} ${h * 0.3} l${w * 0.2} ${-h * 0.35} l${w * 0.2} ${h * 0.55}Z" fill="#fff" opacity=".35"/>`
+const frame = (x: number, y: number, w: number, ht: number, c: string) =>
+  `<rect x="${x - 1.5}" y="${y - 1.5}" width="${w + 3}" height="${ht + 3}" fill="#8b6b45"/><rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="${c}"/>` +
+  `<path d="M${x} ${y + ht} l${w * 0.35} ${-ht * 0.5} l${w * 0.25} ${ht * 0.3} l${w * 0.2} ${-ht * 0.35} l${w * 0.2} ${ht * 0.55}Z" fill="#fff" opacity=".35"/>`
 
 const base = (wall: string) => `<rect width="80" height="52" fill="${wall}"/><rect y="48" width="80" height="4" fill="#000" opacity=".1"/>`
 
@@ -88,7 +88,7 @@ const living = (s: number) =>
 
 const cafe = (s: number) =>
   base('#f7e2c6') +
-  '<path d="M20 0 V10 M52 0 V10" stroke="#555" stroke-width=".8"/><path d="M15 10 h10 l-2 6 h-6Z M47 10 h10 l-2 6 h-6Z" fill="#d94f4f"/>' +
+  '<path d="M20 0 V10 M52 0 V10" stroke="#555" stroke-width=".8"/><path d="M15 10 h10 l-2 6 ht-6Z M47 10 h10 l-2 6 ht-6Z" fill="#d94f4f"/>' +
   glow(20, 18, 11, s) +
   '<rect x="6" y="36" width="50" height="12" fill="#8b5a2b"/><rect x="4" y="34" width="54" height="3" fill="#c79a64"/>' +
   '<rect x="14" y="30" width="5" height="4" fill="#fff"/><rect x="30" y="30" width="5" height="4" fill="#fff"/>' +
@@ -227,12 +227,12 @@ const skyline = (towers: number, stage: number) => {
   const op = ['.45', '.7', '.9'][stage]
 
   return SLOTS.slice(0, Math.min(SLOTS.length, towers))
-    .map(([x, w, h]) => {
-      const top = GROUND - h
+    .map(([x, w, ht]) => {
+      const top = GROUND - ht
       const lines = [x + 8, x + w / 2 - 1.5, x + w - 12].filter((_, k) => w > 40 || k !== 1)
 
       return (
-        `<rect x="${x}" y="${top}" width="${w}" height="${h}" fill="${col}"/><rect x="${x + w / 2 - 1}" y="${top - 10}" width="2" height="10" fill="${col}"/>` +
+        `<rect x="${x}" y="${top}" width="${w}" height="${ht}" fill="${col}"/><rect x="${x + w / 2 - 1}" y="${top - 10}" width="2" height="10" fill="${col}"/>` +
         lines.map(lx => `<path d="M${n(lx)} ${top + 14} V${GROUND - 4}" stroke="${win}" stroke-width="3" stroke-dasharray="3 11" opacity="${op}"/>`).join('')
       )
     })

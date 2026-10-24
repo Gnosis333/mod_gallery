@@ -243,9 +243,9 @@ const POOL_DEPTH =
   Array.from({ length: 9 }, (_, k) => `<ellipse cx="${n(50 + rnd(k + 400) * 300)}" cy="${n(1620 + rnd(k + 410) * 26)}" rx="${n(14 + rnd(k + 420) * 22)}" ry="${n(6 + rnd(k + 430) * 7)}" fill="${pick(['#0a3a46', '#0d4452', '#15555f'], k)}"/>`).join('') +
   Array.from({ length: 11 }, (_, k) => {
     const x = 40 + k * 31 + rnd(k + 440) * 14
-    const h = 44 + rnd(k + 450) * 60
+    const ht = 44 + rnd(k + 450) * 60
 
-    return `<g>${sway(5, x, 1650, 3 + (k % 4) * 0.6, k * 0.8)}<path d="M${n(x)} 1650 q${n(rnd(k) * 10 - 5)} ${n(-h * 0.5)} ${n(rnd(k + 9) * 12 - 6)} ${n(-h)}" fill="none" stroke="${pick(['#1f8f5a', '#2aa56a', '#157a4a'], k)}" stroke-width="${n(3 + (k % 3))}" stroke-linecap="round"/></g>`
+    return `<g>${sway(5, x, 1650, 3 + (k % 4) * 0.6, k * 0.8)}<path d="M${n(x)} 1650 q${n(rnd(k) * 10 - 5)} ${n(-ht * 0.5)} ${n(rnd(k + 9) * 12 - 6)} ${n(-ht)}" fill="none" stroke="${pick(['#1f8f5a', '#2aa56a', '#157a4a'], k)}" stroke-width="${n(3 + (k % 3))}" stroke-linecap="round"/></g>`
   }).join('') +
   Array.from({ length: 9 }, (_, k) => `<ellipse cx="${n(50 + rnd(k + 460) * 300)}" cy="${n(1380 + rnd(k + 470) * 240)}" rx="${n(18 + rnd(k) * 20)}" ry="${n(4 + rnd(k + 5) * 5)}" fill="#bff6ec" opacity="0"><animate attributeName="opacity" values="0;.22;0" dur="${n(4 + rnd(k + 8) * 4)}s" begin="${n(-rnd(k + 3) * 6)}s" repeatCount="indefinite"/></ellipse>`).join('')
 

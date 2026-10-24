@@ -1,6 +1,6 @@
 # campfire
 
-![campfire](campfire.gif)
+![campfire](https://raw.githubusercontent.com/Gnosis333/mod_gallery/main/images/campfire.gif)
 
 A tall campfire pane in a deep forest under the stars. Flames lick upward and sparks crackle off the logs, flowers ring the clearing, forested ridges rise behind, and now and then a fox trots by or an owl perches and swivels its head. While Claude works the fire roars up; when the turn ends it settles back down.
 

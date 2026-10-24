@@ -98,10 +98,10 @@ const BACK =
   `<path d="M8 ${FLOOR} C60 930 120 940 170 952 C240 930 310 944 392 936 V${FLOOR}Z" fill="#14507a" opacity=".8"/>`
 
 // ---- plants and corals ----------------------------------------------------------------
-const kelp = (x: number, h: number, color: string, dur: number, begin: number) =>
+const kelp = (x: number, ht: number, color: string, dur: number, begin: number) =>
   `<g>${sway(3.2, x, FLOOR, dur, -begin)}` +
-  `<path d="M${x} ${FLOOR} q-14 ${-h / 4} 0 ${-h / 2} q14 ${-h / 4} 0 ${-h / 2}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"/>` +
-  `<path d="M${x + 1} ${FLOOR} q-14 ${-h / 4} 0 ${-h / 2} q14 ${-h / 4} 0 ${-h / 2}" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="2.4" stroke-linecap="round"/></g>`
+  `<path d="M${x} ${FLOOR} q-14 ${-ht / 4} 0 ${-ht / 2} q14 ${-ht / 4} 0 ${-ht / 2}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"/>` +
+  `<path d="M${x + 1} ${FLOOR} q-14 ${-ht / 4} 0 ${-ht / 2} q14 ${-ht / 4} 0 ${-ht / 2}" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="2.4" stroke-linecap="round"/></g>`
 
 const stag = (x: number, y: number, ang: number, len: number, depth: number): string => {
   const x2 = x + Math.sin(ang) * len
@@ -145,10 +145,10 @@ const TUBES = [
   [389, 62],
 ]
   .map(
-    ([x, h], i) =>
-      `<g>${sway(1.5, x, FLOOR, 5 + i * 0.6, i)}<rect x="${x - 4.5}" y="${FLOOR - h}" width="9" height="${h + 2}" rx="4.5" fill="url(#tube)"/>` +
-      `<ellipse cx="${x}" cy="${FLOOR - h + 1}" rx="3.6" ry="2" fill="#7a4a14"/>` +
-      `<path d="M${x - 3} ${FLOOR - h - 1} l-1 -5 M${x} ${FLOOR - h - 1} l0 -6 M${x + 3} ${FLOOR - h - 1} l1 -5" stroke="#ff9fb8" stroke-width="1.4" stroke-linecap="round"/></g>`,
+    ([x, ht], i) =>
+      `<g>${sway(1.5, x, FLOOR, 5 + i * 0.6, i)}<rect x="${x - 4.5}" y="${FLOOR - ht}" width="9" height="${ht + 2}" rx="4.5" fill="url(#tube)"/>` +
+      `<ellipse cx="${x}" cy="${FLOOR - ht + 1}" rx="3.6" ry="2" fill="#7a4a14"/>` +
+      `<path d="M${x - 3} ${FLOOR - ht - 1} l-1 -5 M${x} ${FLOOR - ht - 1} l0 -6 M${x + 3} ${FLOOR - ht - 1} l1 -5" stroke="#ff9fb8" stroke-width="1.4" stroke-linecap="round"/></g>`,
   )
   .join('')
 

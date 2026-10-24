@@ -66,10 +66,10 @@ const skyline = (fill: string, base: number, minH: number, maxH: number, seed: n
   let out = ''
   for (let k = 0; x < GR; k++) {
     const w = 22 + rnd(seed + k) * 30
-    const h = minH + rnd(seed + k + 100) * (maxH - minH)
-    out += `<rect x="${n(x)}" y="${n(base - h)}" width="${n(w)}" height="${n(h + 2)}" fill="${fill}"/>`
+    const ht = minH + rnd(seed + k + 100) * (maxH - minH)
+    out += `<rect x="${n(x)}" y="${n(base - ht)}" width="${n(w)}" height="${n(ht + 2)}" fill="${fill}"/>`
     if (lights) {
-      out += `<path d="M${n(x + 5)} ${n(base - h + 10)} V${base}" stroke="${lights}" stroke-width="3" stroke-dasharray="3 ${n(7 + rnd(seed + k + 50) * 6)}" opacity=".55"/>`
+      out += `<path d="M${n(x + 5)} ${n(base - ht + 10)} V${base}" stroke="${lights}" stroke-width="3" stroke-dasharray="3 ${n(7 + rnd(seed + k + 50) * 6)}" opacity=".55"/>`
     }
     x += w + 2 + rnd(seed + k + 200) * 4
   }
@@ -274,7 +274,7 @@ const BOOKS = [
   [-16, 9, '#3f6fb0'],
   [-14, 10, '#e0b43a'],
 ]
-  .map(([dx, h, c], i) => `<rect x="${dx}" y="${-(i + 1) * 11}" width="${36 - i * 4}" height="10" rx="1.4" fill="${c}"/>`)
+  .map(([dx, ht, c], i) => `<rect x="${dx}" y="${-(i + 1) * 11}" width="${36 - i * 4}" height="10" rx="1.4" fill="${c}"/>`)
   .join('')
 
 const ROOM =
@@ -288,8 +288,8 @@ const ROOM =
       let x = 52
       for (let k = 0; x < 340; k++) {
         const w = 8 + rnd(k + row * 30 + 700) * 8
-        const h = 34 + rnd(k + row * 30 + 720) * 22
-        books += `<rect x="${n(x)}" y="${n(y - h)}" width="${n(w)}" height="${n(h)}" fill="${pick(['#8e3f3a', '#35577d', '#b58a35', '#4a6b4c', '#6c4a7a', '#a8645a'], k + row * 3)}"/>`
+        const ht = 34 + rnd(k + row * 30 + 720) * 22
+        books += `<rect x="${n(x)}" y="${n(y - ht)}" width="${n(w)}" height="${n(ht)}" fill="${pick(['#8e3f3a', '#35577d', '#b58a35', '#4a6b4c', '#6c4a7a', '#a8645a'], k + row * 3)}"/>`
         x += w + 1
       }
 

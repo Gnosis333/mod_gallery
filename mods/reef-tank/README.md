@@ -1,6 +1,6 @@
 # reef-tank
 
-![reef-tank](reef-tank.gif)
+![reef-tank](https://raw.githubusercontent.com/Gnosis333/mod_gallery/main/images/reef-tank.gif)
 
 A tall aquarium pane with tropical fish, a seahorse and jellyfish above a coral floor. While Claude works the pump runs, the lights come up and a small yellow submarine goes down through the water; when the turn ends the tank goes calm again.
 

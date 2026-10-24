@@ -78,11 +78,11 @@ const MOUNTAINS =
 
 // ---- the white forest -------------------------------------------------------------------------------------
 // far trees skip the grey edge on their snow: too small to need it, and it keeps the picture light
-const pine = (x: number, base: number, h: number, w: number, dark: string, k: number, edged = true) => {
+const pine = (x: number, base: number, ht: number, w: number, dark: string, k: number, edged = true) => {
   const tiers = [0, 1, 2, 3]
     .map(i => {
-      const top = base - h + i * h * 0.2
-      const bot = top + h * 0.36
+      const top = base - ht + i * ht * 0.2
+      const bot = top + ht * 0.36
       const hw = (w / 2) * (0.42 + 0.2 * i)
       const mid = top + (bot - top) * 0.62
 
@@ -106,17 +106,17 @@ const pine = (x: number, base: number, h: number, w: number, dark: string, k: nu
   return `<rect x="${n(x - w * 0.05)}" y="${n(base - 6)}" width="${n(w * 0.1)}" height="12" fill="#5a4636"/>${tiers}`
 }
 
-const birch = (x: number, base: number, h: number) =>
-  `<rect x="${x - 3.5}" y="${base - h}" width="7" height="${h}" fill="#f4f2ec"/><rect x="${x + 1.5}" y="${base - h}" width="2" height="${h}" fill="#d8d4ca"/>` +
-  Array.from({ length: Math.floor(h / 18) }, (_, k) => `<path d="M${x - 3.5} ${base - h + 10 + k * 18 + rnd(x + k) * 6} h${n(3 + rnd(x + k + 5) * 4)}" stroke="#3a3530" stroke-width="1.6"/>`).join('') +
-  `<path d="M${x} ${base - h * 0.7} l-22 -26 M${x} ${base - h * 0.5} l20 -22 M${x} ${base - h * 0.85} l14 -20" stroke="#8a8278" stroke-width="1.4" fill="none"/>` +
-  `<path d="M${x - 22} ${base - h * 0.7 - 26} l8 9 M${x + 20} ${base - h * 0.5 - 22} l-7 8" stroke="#fbfdff" stroke-width="2.4" stroke-linecap="round"/>`
+const birch = (x: number, base: number, ht: number) =>
+  `<rect x="${x - 3.5}" y="${base - ht}" width="7" height="${ht}" fill="#f4f2ec"/><rect x="${x + 1.5}" y="${base - ht}" width="2" height="${ht}" fill="#d8d4ca"/>` +
+  Array.from({ length: Math.floor(ht / 18) }, (_, k) => `<path d="M${x - 3.5} ${base - ht + 10 + k * 18 + rnd(x + k) * 6} ht${n(3 + rnd(x + k + 5) * 4)}" stroke="#3a3530" stroke-width="1.6"/>`).join('') +
+  `<path d="M${x} ${base - ht * 0.7} l-22 -26 M${x} ${base - ht * 0.5} l20 -22 M${x} ${base - ht * 0.85} l14 -20" stroke="#8a8278" stroke-width="1.4" fill="none"/>` +
+  `<path d="M${x - 22} ${base - ht * 0.7 - 26} l8 9 M${x + 20} ${base - ht * 0.5 - 22} l-7 8" stroke="#fbfdff" stroke-width="2.4" stroke-linecap="round"/>`
 
 const FAR_FOREST = Array.from({ length: 19 }, (_, k) => {
   const x = k * 22 - 4 + rnd(k) * 8
-  const h = 30 + rnd(k + 40) * 26
+  const ht = 30 + rnd(k + 40) * 26
 
-  return pine(x, GROUND + 4 + rnd(k + 80) * 6, h, h * 0.62, '#7891a6', k, false)
+  return pine(x, GROUND + 4 + rnd(k + 80) * 6, ht, ht * 0.62, '#7891a6', k, false)
 }).join('')
 
 const MID_FOREST = [
@@ -125,7 +125,7 @@ const MID_FOREST = [
   [380, 790, 110],
   [70, 790, 100],
 ]
-  .map(([x, b, h], k) => pine(x, b, h, h * 0.6, '#3d6658', k + 100))
+  .map(([x, b, ht], k) => pine(x, b, ht, ht * 0.6, '#3d6658', k + 100))
   .join('')
 
 const NEAR_TREES = pine(34, 960, 300, 150, '#24483c', 200) + pine(392, 990, 320, 160, '#24483c', 210) + birch(124, 900, 150) + birch(350, 916, 120)
@@ -178,20 +178,20 @@ const CABIN =
   '<rect x="226" y="806" width="30" height="56" rx="3" fill="#5a3826"/><circle cx="250" cy="836" r="2" fill="#d8b04a"/>' +
   '<circle cx="241" cy="822" r="7" fill="none" stroke="#3f7a4a" stroke-width="3.4"/><circle cx="241" cy="816" r="1.8" fill="#d8403a"/>' +
   '<rect x="218" y="860" width="46" height="8" fill="#fbfdff"/>' +
-  WINDOWS.map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#3a4a64"/><path d="M${x + 2} ${y + h - 4} L${x + w * 0.45} ${y + 2}" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`).join('')
+  WINDOWS.map(([x, y, w, ht]) => `<rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="#3a4a64"/><path d="M${x + 2} ${y + ht - 4} L${x + w * 0.45} ${y + 2}" stroke="#fff" stroke-opacity=".25" stroke-width="5"/>`).join('')
 
 const FRAMES = WINDOWS.map(
-  ([x, y, w, h]) =>
-    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#e8dcc8" stroke-width="3"/><path d="M${x + w / 2} ${y} V${y + h} M${x} ${y + h / 2} H${x + w}" stroke="#e8dcc8" stroke-width="2"/>` +
-    `<path d="M${x - 4} ${y + h + 2} Q${x + w / 2} ${y + h - 6} ${x + w + 4} ${y + h + 2}Z" fill="#fbfdff"/>`,
+  ([x, y, w, ht]) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="none" stroke="#e8dcc8" stroke-width="3"/><path d="M${x + w / 2} ${y} V${y + ht} M${x} ${y + ht / 2} H${x + w}" stroke="#e8dcc8" stroke-width="2"/>` +
+    `<path d="M${x - 4} ${y + ht + 2} Q${x + w / 2} ${y + ht - 6} ${x + w + 4} ${y + ht + 2}Z" fill="#fbfdff"/>`,
 ).join('')
 
 // warm light in the windows and spilling on the snow, and the lantern by the door
 const LIGHTS =
   WINDOWS.map(
-    ([x, y, w, h]) =>
-      `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffd27a"><animate attributeName="fill" values="#ffd27a;#ffc860;#ffd27a" dur="3s" repeatCount="indefinite"/></rect>` +
-      `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w}" ry="${h}" fill="#ffd27a" opacity=".22"/><path d="M${x - 6} 868 L${x + w + 6} 868 L${x + w + 20} 910 L${x - 20} 910Z" fill="#ffd27a" opacity=".16"/>`,
+    ([x, y, w, ht]) =>
+      `<rect x="${x}" y="${y}" width="${w}" height="${ht}" fill="#ffd27a"><animate attributeName="fill" values="#ffd27a;#ffc860;#ffd27a" dur="3s" repeatCount="indefinite"/></rect>` +
+      `<ellipse cx="${x + w / 2}" cy="${y + ht / 2}" rx="${w}" ry="${ht}" fill="#ffd27a" opacity=".22"/><path d="M${x - 6} 868 L${x + w + 6} 868 L${x + w + 20} 910 L${x - 20} 910Z" fill="#ffd27a" opacity=".16"/>`,
   ).join('') +
   '<circle cx="240" cy="736" r="8" fill="#ffd27a"/>' +
   '<rect x="262" y="808" width="8" height="12" rx="2" fill="#ffe2a0"/><circle cx="266" cy="814" r="22" fill="#ffd27a" opacity=".2"/>'

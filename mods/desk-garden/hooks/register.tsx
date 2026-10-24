@@ -310,7 +310,7 @@ const ROOM =
   '<path d="M30 262 L165 262 L182 272 L47 272Z" fill="#fff6d8" opacity=".2"/>' +
   // mug
   '<rect x="338" y="238" width="28" height="30" rx="4" fill="#f4efe6" stroke="#cfc3ac"/>' +
-  '<path d="M366 245 h5 a6 6 0 0 1 0 14 h-5" fill="none" stroke="#cfc3ac" stroke-width="3"/>' +
+  '<path d="M366 245 h5 a6 6 0 0 1 0 14 ht-5" fill="none" stroke="#cfc3ac" stroke-width="3"/>' +
   '<ellipse cx="352" cy="240" rx="12" ry="2.6" fill="#6b4a33"/>' +
   steam(347, 0) +
   steam(357, 2.2) +
@@ -350,9 +350,9 @@ const frame = (inner: string) =>
 
 // ---- upper half: the window room, the cat and the fish tank --------------------
 const WB = 452 + T
-const seaweed = (x: number, h: number, begin: number) =>
+const seaweed = (x: number, ht: number, begin: number) =>
   `<g><animateTransform attributeName="transform" type="rotate" values="-5 ${x} ${WB};5 ${x} ${WB};-5 ${x} ${WB}" ${keyed([0, 0.5, 1])} dur="${4 + begin}s" begin="${-begin}s" repeatCount="indefinite"/>` +
-  `<path d="M${x} ${WB} q-7 ${-h / 3} 0 ${-h / 2} q7 ${-h / 3} 0 ${-h / 2}" fill="none" stroke="#4f9a63" stroke-width="3.2" stroke-linecap="round"/></g>`
+  `<path d="M${x} ${WB} q-7 ${-ht / 3} 0 ${-ht / 2} q7 ${-ht / 3} 0 ${-ht / 2}" fill="none" stroke="#4f9a63" stroke-width="3.2" stroke-linecap="round"/></g>`
 
 const bubble = (x: number, r: number, dur: number, begin: number) =>
   `<circle cx="${x}" cy="${WB - 4}" r="${r}" fill="#fff" fill-opacity=".55" stroke="#fff" stroke-opacity=".8" stroke-width=".6" opacity="0">` +
@@ -459,10 +459,10 @@ const gardenSlot = (i: number, blooms: number, fresh: boolean) => {
   if (i === blooms) {
     return `<g transform="translate(${n(sx)} ${baseY})"><path d="M0 0 q-6 -10 -13 -8 q4 8 13 8Z M0 0 q6 -10 13 -8 q-4 8 -13 8Z" fill="#5f9457"/></g>`
   }
-  const h = 38 + ((i * 13) % 5) * 7
+  const ht = 38 + ((i * 13) % 5) * 7
   const lean = ((i * 7) % 5) - 2
   const hx = sx + lean * 2
-  const hy = baseY - h
+  const hy = baseY - ht
   const popped = fresh && i === blooms - 1
   const kind = BLOOM_KINDS[i % BLOOM_KINDS.length]
   const head = popped
@@ -471,8 +471,8 @@ const gardenSlot = (i: number, blooms: number, fresh: boolean) => {
 
   return (
     `<g>${rotateAbout([-2.2, 2.2, -2.2], sx, baseY, 4 + (i % 4) * 0.7, -i * 0.6, [0, 0.5, 1])}` +
-    `<path d="M${n(sx)} ${baseY} Q${n(sx + lean * 3)} ${baseY - h / 2} ${n(hx)} ${n(hy)}" fill="none" stroke="#4f7d4a" stroke-width="2.2" stroke-linecap="round"/>` +
-    `<path d="M0 0 C7 -9 18 -9 25 -2 C16 5 7 5 0 0Z" fill="#5f9457" transform="translate(${n(sx + lean * 1.4)} ${baseY - h * 0.45}) rotate(-22) scale(.5)"/>` +
+    `<path d="M${n(sx)} ${baseY} Q${n(sx + lean * 3)} ${baseY - ht / 2} ${n(hx)} ${n(hy)}" fill="none" stroke="#4f7d4a" stroke-width="2.2" stroke-linecap="round"/>` +
+    `<path d="M0 0 C7 -9 18 -9 25 -2 C16 5 7 5 0 0Z" fill="#5f9457" transform="translate(${n(sx + lean * 1.4)} ${baseY - ht * 0.45}) rotate(-22) scale(.5)"/>` +
     `<g transform="translate(${n(hx)} ${n(hy)}) scale(.7)">${head}</g></g>`
   )
 }
@@ -648,7 +648,7 @@ const workshop = (w: Look, bubble: { work: string; cheer: string; rest: string }
       // keyboard, mug
       '<rect x="128" y="335" width="106" height="9" rx="2" fill="#4a5058"/>' +
       keys +
-      '<rect x="244" y="318" width="22" height="22" rx="3" fill="#f4efe6" stroke="#cfc3ac"/><path d="M266 324 h4 a5 5 0 0 1 0 10 h-4" fill="none" stroke="#cfc3ac" stroke-width="2.4"/>' +
+      '<rect x="244" y="318" width="22" height="22" rx="3" fill="#f4efe6" stroke="#cfc3ac"/><path d="M266 324 h4 a5 5 0 0 1 0 10 ht-4" fill="none" stroke="#cfc3ac" stroke-width="2.4"/>' +
       // lamp
       '<ellipse cx="368" cy="332" rx="17" ry="4" fill="#4a4f55"/><path d="M368 330 V294 L350 270" fill="none" stroke="#4a4f55" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
       '<path d="M336 276 L354 258 L366 270 L348 286Z" fill="#e8b84a"/>' +

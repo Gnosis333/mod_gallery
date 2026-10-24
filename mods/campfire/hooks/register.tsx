@@ -95,20 +95,20 @@ const ridge = (base: number, amp: number, phase: number, color: string, k: numbe
 
 const RIDGES = ridge(470, 40, 0.4, '#1d2b48', 1, 7) + ridge(560, 34, 2.1, '#16233c', 2, 9) + ridge(650, 28, 4.2, '#111c30', 3, 11)
 
-const pine = (x: number, base: number, h: number, color: string) => {
-  const w = h * 0.36
-  let d = `M${n(x)} ${n(base - h)}`
+const pine = (x: number, base: number, ht: number, color: string) => {
+  const w = ht * 0.36
+  let d = `M${n(x)} ${n(base - ht)}`
   // a ragged silhouette: tiers stepping out on each side
   for (let i = 1; i <= 5; i++) {
-    const y = base - h + (h * i) / 5
+    const y = base - ht + (ht * i) / 5
     const hw = (w * i) / 5
     d += ` L${n(x + hw)} ${n(y)} L${n(x + hw * 0.55)} ${n(y - 2)}`
   }
   d += ` L${n(x - w * 0.55)} ${n(base - 2)}`
   for (let i = 5; i >= 1; i--) {
-    const y = base - h + (h * i) / 5
+    const y = base - ht + (ht * i) / 5
     const hw = (w * i) / 5
-    d += ` L${n(x - hw)} ${n(y)} L${n(x - hw * 0.55)} ${n(y - h / 5 + 2)}`
+    d += ` L${n(x - hw)} ${n(y)} L${n(x - hw * 0.55)} ${n(y - ht / 5 + 2)}`
   }
 
   return `<path d="${d}Z" fill="${color}"/><rect x="${n(x - 2)}" y="${n(base - 3)}" width="4" height="10" fill="${color}"/>`
@@ -158,25 +158,25 @@ const LOG_RING = [30, 90, 150, 210, 270, 330]
 const sway = (dur: number, k: number) =>
   `<animateTransform attributeName="transform" type="rotate" values="-4;4;-4" calcMode="spline" keyTimes="0;.5;1" keySplines="${EASE};${EASE}" dur="${dur}s" begin="${n(-k)}s" repeatCount="indefinite"/>`
 
-// flowers by kind, each drawn at its stem's foot, standing h tall
-const FLOWERS: Record<string, (h: number) => string> = {
-  daisy: h =>
-    `<path d="M0 0 V${-h}" stroke="#3a6a2a" stroke-width="1.6"/><g transform="translate(0 ${-h})">` +
+// flowers by kind, each drawn at its stem's foot, standing ht tall
+const FLOWERS: Record<string, (ht: number) => string> = {
+  daisy: ht =>
+    `<path d="M0 0 V${-ht}" stroke="#3a6a2a" stroke-width="1.6"/><g transform="translate(0 ${-ht})">` +
     Array.from({ length: 8 }, (_, i) => `<ellipse cx="0" cy="-5" rx="1.8" ry="4" fill="#f4f0e6" transform="rotate(${i * 45})"/>`).join('') +
     '<circle r="2.6" fill="#f2c13a"/></g>',
-  tulip: h =>
-    `<path d="M0 0 V${-h}" stroke="#3a6a2a" stroke-width="2"/><path d="M0 -8 Q-8 -14 -6 -22" stroke="#3a6a2a" stroke-width="3" fill="none"/>` +
-    `<path d="M-6 ${-h} Q-7 ${-h - 12} -3 ${-h - 14} L0 ${-h - 9} L3 ${-h - 14} Q7 ${-h - 12} 6 ${-h} Q0 ${-h + 5} -6 ${-h}Z" fill="#e8405a"/>`,
-  poppy: h =>
-    `<path d="M0 0 Q2 ${-h / 2} 0 ${-h}" stroke="#4a6a2a" stroke-width="1.4" fill="none"/><g transform="translate(0 ${-h})"><circle r="7" fill="#e83a2a"/><circle cx="-2" cy="-2" r="4" fill="#ff5a3a" opacity=".7"/><circle r="2.2" fill="#1a1010"/></g>`,
-  bluebell: h =>
-    `<path d="M0 0 Q4 ${-h * 0.7} ${-6} ${-h}" stroke="#3a6a2a" stroke-width="1.4" fill="none"/>` +
-    [0.45, 0.65, 0.85].map((f, i) => `<path d="M${n(2 - f * 7)} ${n(-h * f)} q-3 2 -3 7 l2 -1 l1 2 l1 -2 l2 1 q0 -5 -3 -7Z" fill="#5a6ae8" transform="rotate(${i * 8 - 8} ${n(2 - f * 7)} ${n(-h * f)})"/>`).join(''),
-  lavender: h =>
-    `<path d="M0 0 V${-h}" stroke="#4a6a3a" stroke-width="1.4"/>` + Array.from({ length: 6 }, (_, i) => `<ellipse cx="${i % 2 ? 1.6 : -1.6}" cy="${-h + i * 3.4}" rx="2" ry="2.6" fill="#9a6ad8"/>`).join(''),
-  forgetmenot: h =>
-    `<path d="M0 0 V${-h}" stroke="#3a6a2a" stroke-width="1.2"/>` +
-    [[-4, -h], [3, -h - 3], [1, -h + 5]].map(([x, y]) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(a => `<circle cx="0" cy="-2" r="1.6" fill="#7ab8ff" transform="rotate(${a})"/>`).join('')}<circle r="1" fill="#f2e05a"/></g>`).join(''),
+  tulip: ht =>
+    `<path d="M0 0 V${-ht}" stroke="#3a6a2a" stroke-width="2"/><path d="M0 -8 Q-8 -14 -6 -22" stroke="#3a6a2a" stroke-width="3" fill="none"/>` +
+    `<path d="M-6 ${-ht} Q-7 ${-ht - 12} -3 ${-ht - 14} L0 ${-ht - 9} L3 ${-ht - 14} Q7 ${-ht - 12} 6 ${-ht} Q0 ${-ht + 5} -6 ${-ht}Z" fill="#e8405a"/>`,
+  poppy: ht =>
+    `<path d="M0 0 Q2 ${-ht / 2} 0 ${-ht}" stroke="#4a6a2a" stroke-width="1.4" fill="none"/><g transform="translate(0 ${-ht})"><circle r="7" fill="#e83a2a"/><circle cx="-2" cy="-2" r="4" fill="#ff5a3a" opacity=".7"/><circle r="2.2" fill="#1a1010"/></g>`,
+  bluebell: ht =>
+    `<path d="M0 0 Q4 ${-ht * 0.7} ${-6} ${-ht}" stroke="#3a6a2a" stroke-width="1.4" fill="none"/>` +
+    [0.45, 0.65, 0.85].map((f, i) => `<path d="M${n(2 - f * 7)} ${n(-ht * f)} q-3 2 -3 7 l2 -1 l1 2 l1 -2 l2 1 q0 -5 -3 -7Z" fill="#5a6ae8" transform="rotate(${i * 8 - 8} ${n(2 - f * 7)} ${n(-ht * f)})"/>`).join(''),
+  lavender: ht =>
+    `<path d="M0 0 V${-ht}" stroke="#4a6a3a" stroke-width="1.4"/>` + Array.from({ length: 6 }, (_, i) => `<ellipse cx="${i % 2 ? 1.6 : -1.6}" cy="${-ht + i * 3.4}" rx="2" ry="2.6" fill="#9a6ad8"/>`).join(''),
+  forgetmenot: ht =>
+    `<path d="M0 0 V${-ht}" stroke="#3a6a2a" stroke-width="1.2"/>` +
+    [[-4, -ht], [3, -ht - 3], [1, -ht + 5]].map(([x, y]) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(a => `<circle cx="0" cy="-2" r="1.6" fill="#7ab8ff" transform="rotate(${a})"/>`).join('')}<circle r="1" fill="#f2e05a"/></g>`).join(''),
 }
 
 const BEDS: [number, number, string, number][] = [
@@ -198,9 +198,9 @@ const BEDS: [number, number, string, number][] = [
 const FLOWERBEDS = BEDS.map(([x, y, kind, count], b) =>
   Array.from({ length: count }, (_, i) => {
     const dx = (i - (count - 1) / 2) * 10 + rnd(b * 10 + i) * 6
-    const h = 18 + rnd(b * 10 + i + 50) * 14
+    const ht = 18 + rnd(b * 10 + i + 50) * 14
 
-    return `<g transform="translate(${n(x + dx)} ${n(y + rnd(b * 10 + i + 90) * 8)})"><g>${sway(3 + rnd(b + i) * 2, b + i)}${FLOWERS[kind]!(h)}</g></g>`
+    return `<g transform="translate(${n(x + dx)} ${n(y + rnd(b * 10 + i + 90) * 8)})"><g>${sway(3 + rnd(b + i) * 2, b + i)}${FLOWERS[kind]!(ht)}</g></g>`
   }).join(''),
 ).join('')
 
@@ -234,10 +234,10 @@ const LOGS =
   '</g>'
 
 // one tongue of flame, its tip licking side to side and leaping up and down
-const tongue = (x: number, w: number, h: number, color: string, dur: number, k: number) => {
+const tongue = (x: number, w: number, ht: number, color: string, dur: number, k: number) => {
   const shape = (tip: number, hh: number) =>
     `M${n(x - w)} 0 C${n(x - w)} ${n(-hh * 0.45)} ${n(x - w * 0.15 + tip * 0.3)} ${n(-hh * 0.6)} ${n(x + tip)} ${n(-hh)} C${n(x + w * 0.15 + tip * 0.3)} ${n(-hh * 0.6)} ${n(x + w)} ${n(-hh * 0.45)} ${n(x + w)} 0 Q${n(x)} ${n(w * 0.3)} ${n(x - w)} 0Z`
-  const frames = [0, 1, 2, 3, 0].map(i => shape((rnd(k * 7 + i) - 0.5) * w * 1.4, h * (0.78 + rnd(k * 7 + i + 3) * 0.36)))
+  const frames = [0, 1, 2, 3, 0].map(i => shape((rnd(k * 7 + i) - 0.5) * w * 1.4, ht * (0.78 + rnd(k * 7 + i + 3) * 0.36)))
   frames[4] = frames[0]!
 
   return `<path d="${frames[0]}" fill="${color}"><animate attributeName="d" values="${frames.join(';')}" dur="${n(dur)}s" begin="${n(-rnd(k + 800) * dur)}s" repeatCount="indefinite"/></path>`

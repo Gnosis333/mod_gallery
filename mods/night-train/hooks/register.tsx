@@ -133,7 +133,7 @@ const TREES = [30, 92, 150, 214, 270, 336].map((x, k) => [x, 58 + rnd(k + 400) *
 
 const near = (dx: number) =>
   `<rect x="${dx}" y="700" width="${T}" height="${GB - 700}" fill="#0a0f1e"/>` +
-  TREES.map(([x, h]) => `<path d="M${dx + x - 16} 712 L${dx + x} ${n(712 - h)} L${dx + x + 16} 712Z" fill="#0b1226"/>`).join('')
+  TREES.map(([x, ht]) => `<path d="M${dx + x - 16} 712 L${dx + x} ${n(712 - ht)} L${dx + x + 16} 712Z" fill="#0b1226"/>`).join('')
 
 const poles = (dx: number) =>
   [100, 300].map(x => `<rect x="${dx + x - 3}" y="586" width="6" height="${GB - 586}" fill="#05080f"/><rect x="${dx + x - 16}" y="596" width="32" height="4" fill="#05080f"/>`).join('') +

@@ -1,6 +1,6 @@
 # night-train
 
-![night-train](night-train.gif)
+![night-train](https://raw.githubusercontent.com/Gnosis333/mod_gallery/main/images/night-train.gif)
 
 A tall night-train window pane. At rest the train waits at a lamp-lit station. While Claude works it runs through the night with hills, trees and poles streaming past, sometimes through a long tunnel, with migrating birds crossing the sky. When the turn ends it pulls back into the station.
 
