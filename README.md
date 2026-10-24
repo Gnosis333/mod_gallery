@@ -3,7 +3,7 @@
 Claude Code 옆에 띄워 두는 **그림 패널**과 입력창 위 **상태 띠**를 모았습니다. 패널은 Claude가 쉬고 있을 때와 일하고 있을 때 모습이 달라집니다.
 A small collection of mods for Claude Code: animated side panels that change when Claude is idle vs. working, and two prompt bands.
 
-> 모든 장면은 코드로 그린 SVG 애니메이션입니다(이미지 파일 없음). 아래 그림은 각 모드를 실제로 그려서 **왼쪽 쉬는 중 / 오른쪽 작업 중**으로 캡처한 것입니다.
+> 모든 장면은 코드로 그린 SVG 애니메이션입니다(이미지 파일 없음). 아래 움직이는 그림은 각 모드를 실제로 그려서 **왼쪽 쉬는 중 / 오른쪽 작업 중**으로 캡처한 것입니다(8초 반복).
 
 ## 요구 사항
 
@@ -52,67 +52,67 @@ claude plugin install night-train@mod-gallery --scope user
 
 ### night-train
 
-<img src="images/night-train.png" alt="night-train" width="560">
+<img src="images/night-train.gif" alt="night-train" width="460">
 
 상하로 긴 열차 창가입니다. 쉴 때는 `STATION`에 정차해 가로등이 켜져 있고, 작업이 시작되면 역이 빠져나가며 산·나무·전신주가 서로 다른 속도로 흘러갑니다. 가끔 긴 터널을 지나고, 하늘에는 철새떼가 날아갑니다. 찻잔의 김이 바람에 날리고, 턴이 끝나면 다시 역으로 들어옵니다.
 
 ### beach-day
 
-<img src="images/beach-day.png" alt="beach-day" width="560">
+<img src="images/beach-day.gif" alt="beach-day" width="460">
 
 위에서 내려다본 해변입니다. 잔잔한 파도가 밀려오고, 파라솔 아래 썬베드에 선글라스를 낀 사람들이 누워 있습니다(비키니·원피스·반바지). 바다에는 **핑크 유니콘 튜브**를 비롯해 여러 튜브가 떠 있습니다. 작업 중에는 제트스키와 바나나보트가 지나가고 꽃게가 모래 위를 옆으로 걷습니다.
 
 ### snow-cabin
 
-<img src="images/snow-cabin.png" alt="snow-cabin" width="560">
+<img src="images/snow-cabin.gif" alt="snow-cabin" width="460">
 
 눈이 소복소복 내리는 흰 숲과 설산, 통나무 오두막입니다. 쉴 때는 낮이고, 작업 중에는 밤이 되어 창에 불이 켜지고 굴뚝 연기가 짙어지며 **눈사람이 15초마다 하나씩** 생깁니다. 흰 토끼, 흰 여우, 까치, 허스키가 찾아옵니다.
 
 ### deep-sub
 
-<img src="images/deep-sub.png" alt="deep-sub" width="560">
+<img src="images/deep-sub.gif" alt="deep-sub" width="460">
 
 어둠 속을 천천히 떠도는 노란 잠수정과 발광 생물들입니다. 야광 해파리, 아귀, 샛비늘치 떼, 덤보 문어, 풍선장어가 지나가고, 저 아래에는 정체를 알 수 없는 거대한 것이 희미하게 떠올랐다 사라집니다. 작업 중에는 탐조등이 켜지고 소나가 울리며, 가끔 거대 오징어의 그림자가 스칩니다.
 
 ### campfire
 
-<img src="images/campfire.png" alt="campfire" width="560">
+<img src="images/campfire.gif" alt="campfire" width="460">
 
 별이 가득한 밤, 빽빽한 숲속 공터의 모닥불입니다. 불꽃이 일렁이고 불티가 탁탁 튀어 오르며, 둘레에 통나무와 여섯 종류의 꽃이 있습니다. 여우, 올빼미(머리를 휙 돌립니다), 사슴, 너구리, 고슴도치가 찾아옵니다. 작업 중에는 불이 커지고, 끝나면 잦아듭니다.
 
 ### jungle-falls
 
-<img src="images/jungle-falls.png" alt="jungle-falls" width="560">
+<img src="images/jungle-falls.gif" alt="jungle-falls" width="460">
 
 굽이쳐 내려오는 계단식 폭포와 연꽃 연못입니다. 동물 24종이 무작위로 찾아오고(새, 원숭이, 재규어, 악어, 개구리, 수달 등), 폭포를 거슬러 오르는 물고기가 팔딱입니다. 쉴 때는 낮, 작업 중에는 밤입니다. 그림이 커서 이 모드가 CPU를 가장 많이 씁니다.
 
 ### rain-window
 
-<img src="images/rain-window.png" alt="rain-window" width="560">
+<img src="images/rain-window.gif" alt="rain-window" width="460">
 
 비 오는 창가입니다. 빗방울이 유리를 타고 내려가며 합쳐지고, 도시 불빛이 번지며, 고양이가 창턱에서 졸고 있습니다. 작업 중에는 폭풍이 오고 번개가 치면 고양이가 눈을 뜨고 스탠드 불빛이 깜빡입니다. 끝나면 무지개가 떴다가 사라집니다.
 
 ### moon-view
 
-<img src="images/moon-view.png" alt="moon-view" width="560">
+<img src="images/moon-view.gif" alt="moon-view" width="460">
 
 달 표면에서 본 지구입니다. 착륙선의 "눈"이 번쩍이고, 우주인이 통통 뛰어다닙니다(작업 중에는 중심을 못 잡고 빙빙 돕니다). 별, 초신성, 블랙홀, 로켓, 위성, UFO, 행성, 그리고 스타워즈풍 우주선이 무작위로 지나갑니다.
 
 ### tower-cut
 
-<img src="images/tower-cut.png" alt="tower-cut" width="560">
+<img src="images/tower-cut.gif" alt="tower-cut" width="460">
 
 빌딩 단면입니다. **턴이 끝날 때마다 한 층**씩 올라가고, 20층이 되면 준공 불꽃놀이를 합니다. 세션이 끝나면 처음부터 다시 짓습니다. 작업 중에는 타워크레인이 움직이며 다음 층의 뼈대를 세웁니다.
 
 ### desk-garden
 
-<img src="images/desk-garden.png" alt="desk-garden" width="560">
+<img src="images/desk-garden.gif" alt="desk-garden" width="460">
 
 창가의 화분(턴이 끝날 때마다 꽃이 핍니다), 졸고 있는 고양이와 수조, 그리고 Claude가 일하는 작업실이 위아래로 쌓인 패널입니다. 작업 중에는 작업실의 Claude가 키보드를 칩니다.
 
 ### reef-tank
 
-<img src="images/reef-tank.png" alt="reef-tank" width="560">
+<img src="images/reef-tank.gif" alt="reef-tank" width="460">
 
 물고기, 해마, 해파리가 있는 키 큰 수족관입니다. 작업 중에는 조명이 어두워지고 노란 잠수함이 내려오며, 턴이 끝날 때마다 보물상자에 진주가 하나씩 쌓입니다.
 
