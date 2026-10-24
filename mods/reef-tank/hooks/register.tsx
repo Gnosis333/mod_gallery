@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Reef } from '../types'
 
 const PANE = 'reef-tank'
-const TITLE = '어항'
-const ALT = '산호와 말미잘이 있는 수족관에서 알록달록한 열대어가 헤엄치고, 아래에서 물방울이 가끔 올라옵니다.'
+const TITLE = 'Reef tank'
+const ALT = 'A tank with corals and anemones where colourful tropical fish swim and bubbles rise now and then.'
 
 // ---scene-start
 type Pt = [number, number]
@@ -718,7 +718,7 @@ export const register: Register = on => {
   on('command.run', { command: 'reef' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '어항을 열었습니다.' }
+    return { text: 'Opened the reef tank pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -753,7 +753,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : `쉬는 중 · 진주 ${w.done}개`
+    const line = w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : `Idle · pearls ${w.done}`
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -786,7 +786,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

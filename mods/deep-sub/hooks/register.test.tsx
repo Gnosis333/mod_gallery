@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'deep-sub',
   props: {
-    title: '심해',
+    title: 'Deep sea',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -49,7 +49,7 @@ test('at rest the submersible hangs in the dark; jellyfish, an anglerfish and th
     expect(svg).toMatch(/<g opacity="\.13">/)
     expect(svg).not.toMatch(BEAM)
     expect(svg).not.toMatch(SQUID)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -61,7 +61,7 @@ test('at work the searchlight comes on, sonar pings, and the giant squid passes;
   await $.tool.call({ tool: 'Bash', command: 'ls' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 1회')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 1')
   const busy = await source(ui)
   expect(busy).toMatch(BEAM)
   expect(busy).toMatch(SQUID)
@@ -81,7 +81,7 @@ test('the terminal gets a still text submersible', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

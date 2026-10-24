@@ -46,7 +46,7 @@ export const register: Register = on => {
 
     return (
       <Text color="error" bold>
-        ⚠ 주의: 현재 Haiku 모델({id})이 선택되어 있습니다. 복잡한 작업은 /model 로 바꾸세요.
+        ⚠ Heads up: the Haiku model ({id}) is selected. Switch with /model for complex work.
       </Text>
     )
   })

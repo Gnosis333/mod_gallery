@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'beach-day',
   props: {
-    title: '해변',
+    title: 'Beach',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -44,7 +44,7 @@ test('at rest: waves, sunbeds under parasols, and swimmers on rings, the pink un
     expect(svg.match(/fill="#1a1a22"\/><ellipse cx="2\.6"/g)?.length).toBeGreaterThan(8)
     // no jet ski or banana boat at rest
     expect(svg).not.toMatch(/fill="#e84a4a"\/><path d="M-12 -4 H2/)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -56,7 +56,7 @@ test('at work a jet ski and a banana boat run past, and the waves come in quicke
   await $.tool.call({ tool: 'Bash', command: 'ls' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 1회')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 1')
   const busy = await source(ui)
   expect(busy).toMatch(/fill="#e84a4a"\/><path d="M-12 -4 H2/)
   expect(busy).toMatch(/fill="#ffd23f"\/><path d="M-30 0 H32"/)
@@ -78,7 +78,7 @@ test('the terminal gets a still text beach', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

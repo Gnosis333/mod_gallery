@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'reef-tank',
   props: {
-    title: '어항',
+    title: 'Reef tank',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -35,7 +35,7 @@ test('the pane draws the aquarium as one animated SVG off the terminal', async (
 
     expect(svg).toMatch(/animateMotion/)
     expect(svg).not.toMatch(/M250 70 C285/)
-    expect((await ui.find({ type: 'Text', text: /쉬는 중/ }))?.text).toBe('쉬는 중 · 진주 0개')
+    expect((await ui.find({ type: 'Text', text: /Idle/ }))?.text).toBe('Idle · pearls 0')
     await ui.unmount()
   }
 })
@@ -48,11 +48,11 @@ test('at work the top line counts and the diver goes down; a finished turn keeps
   await $.tool.call({ tool: 'Read', file_path: '/x' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect((await ui.find({ type: 'Text', text: /작업 중/ }))?.text).toBe('작업 중 00:00 · 도구 2회')
+  expect((await ui.find({ type: 'Text', text: /Working/ }))?.text).toBe('Working 00:00 · tools 2')
   expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/M250 70 C285/)
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect((await ui.find({ type: 'Text', text: /진주/ }))?.text).toBe('쉬는 중 · 진주 1개')
+  expect((await ui.find({ type: 'Text', text: /pearls/ }))?.text).toBe('Idle · pearls 1')
   await ui.unmount()
 })
 
@@ -62,7 +62,7 @@ test('the terminal gets a still text aquarium', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

@@ -24,7 +24,7 @@ const ACCENT: Record<string, string> = {
   cost: '#c2b08a',
 }
 
-const LABELS: Record<string, string> = { five_hour: '5시간', seven_day: '7일' }
+const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
 
 type Usage = {
   context: { tokens?: number; window: number; percent?: number }
@@ -46,7 +46,7 @@ const tone = (percent: number | undefined, base: string) =>
 const kilo = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`
 
-// When a window starts over, in this computer's time: the 5-hour one as a clock time (with "내일" if it
+// When a window starts over, in this computer's time: the 5-hour one as a clock time (with "tomorrow" if it
 // falls after midnight), the weekly one as month/day.
 const two = (v: number) => String(v).padStart(2, '0')
 const resetLabel = (kind: string, iso: string | undefined, today: Date = new Date()) => {
@@ -56,7 +56,7 @@ const resetLabel = (kind: string, iso: string | undefined, today: Date = new Dat
   const clock = `${two(d.getHours())}:${two(d.getMinutes())}`
   const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000)
 
-  return days <= 0 ? clock : days === 1 ? `내일 ${clock}` : `${d.getMonth() + 1}/${d.getDate()} ${clock}`
+  return days <= 0 ? clock : days === 1 ? `tomorrow ${clock}` : `${d.getMonth() + 1}/${d.getDate()} ${clock}`
 }
 
 const filledCells = (percent: number, cells = CELLS) =>
@@ -104,11 +104,11 @@ export const register: Register = on => {
 
     return (
       <Box backgroundColor={PLATE} paddingX={1}>
-        <Text color={ACCENT.context} bold>{'컨텍스트 '}</Text>
+        <Text color={ACCENT.context} bold>{'Context '}</Text>
         <Text color={color}>{'━'.repeat(filled)}</Text>
         <Text color={TRACK}>{'─'.repeat(CELLS - filled)}</Text>
         {percent === undefined || tokens === undefined ? (
-          <Text color={DIM}>{' 첫 응답 후 표시'}</Text>
+          <Text color={DIM}>{' shown after first reply'}</Text>
         ) : (
           <Box>
             <Text color={color} bold>{` ${percent}%`}</Text>

@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Beach } from '../types'
 
 const PANE = 'beach-day'
-const TITLE = '해변'
-const ALT = '위에서 내려다본 해변. 잔잔한 파도가 밀려오고, 파라솔 아래 썬베드에 선글라스를 낀 사람들이 누워 있으며, 바다에는 핑크 유니콘 튜브를 비롯한 여러 튜브를 탄 사람들이 떠 있습니다.'
+const TITLE = 'Beach'
+const ALT = 'A top-down beach. Gentle waves wash the shore, people in sunglasses lie on sunbeds under parasols, and swimmers float on rings out at sea, a pink unicorn among them.'
 
 // ---scene-start
 type Ride = { working: boolean }
@@ -357,7 +357,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Beach, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Beach, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const shore = atom({ plugin: 'beach-day', key: 'shore' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Beach)
 
@@ -385,7 +385,7 @@ export const register: Register = on => {
   on('command.run', { command: 'beach' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '해변을 열었습니다.' }
+    return { text: 'Opened the beach pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -452,7 +452,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

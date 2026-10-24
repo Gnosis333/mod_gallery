@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Rain } from '../types'
 
 const PANE = 'rain-window'
-const TITLE = '창가'
-const ALT = '비 오는 창가. 빗방울이 유리를 타고 내려가며 합쳐지고, 밖으로 도시 불빛이 번지며, 고양이가 창턱에서 졸고 있습니다.'
+const TITLE = 'Rainy window'
+const ALT = 'A rainy window. Drops run down the glass and merge, city lights blur outside, and a cat dozes on the sill.'
 
 // ---scene-start
 const W = 400
@@ -369,7 +369,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Rain, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Rain, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const rain = atom(
   { plugin: 'rain-window', key: 'window' } as const,
@@ -400,7 +400,7 @@ export const register: Register = on => {
   on('command.run', { command: 'rain' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '창가를 열었습니다.' }
+    return { text: 'Opened the rainy-window pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -470,7 +470,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

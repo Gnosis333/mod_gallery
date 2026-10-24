@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Train } from '../types'
 
 const PANE = 'night-train'
-const TITLE = '야간열차'
-const ALT = '야간열차의 창가. 쉴 때는 가로등이 켜진 역에 서 있고, 일할 때는 산과 나무와 전신주가 창밖으로 흘러갑니다.'
+const TITLE = 'Night train'
+const ALT = 'A night-train window. At rest it waits at a lamp-lit station; while Claude works, hills, trees and poles stream past the glass.'
 
 // ---scene-start
 type Ride = { working: boolean; startedAt: number; endedAt: number; travelled: number }
@@ -331,7 +331,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Train, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Train, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const ride = atom(
   { plugin: 'night-train', key: 'ride' } as const,
@@ -364,7 +364,7 @@ export const register: Register = on => {
   on('command.run', { command: 'train' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '야간열차를 열었습니다.' }
+    return { text: 'Opened the night-train pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -440,7 +440,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

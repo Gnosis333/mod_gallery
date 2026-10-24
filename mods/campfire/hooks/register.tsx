@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Camp } from '../types'
 
 const PANE = 'campfire'
-const TITLE = '모닥불'
-const ALT = '별이 가득한 밤, 빽빽한 숲속 공터의 모닥불. 불꽃이 일렁이고 불티가 탁탁 튀어 오르며, 꽃들이 둘레에 피어 있고, 가끔 여우가 지나가거나 올빼미가 앉아 고개를 돌립니다.'
+const TITLE = 'Campfire'
+const ALT = 'A campfire in a dense forest clearing on a starry night. Flames lick, sparks crackle up, flowers ring the clearing, and now and then a fox trots by or an owl perches and swivels its head.'
 
 // ---scene-start
 type Fire = { working: boolean; startedAt: number; endedAt: number }
@@ -513,7 +513,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Camp, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Camp, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const fire = atom({ plugin: 'campfire', key: 'fire' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Camp)
 
@@ -541,7 +541,7 @@ export const register: Register = on => {
   on('command.run', { command: 'fire' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '모닥불을 열었습니다.' }
+    return { text: 'Opened the campfire pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -611,7 +611,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

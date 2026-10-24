@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'jungle-falls',
   props: {
-    title: '정글',
+    title: 'Jungle',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -38,7 +38,7 @@ test('the pane draws the winding falls and leaping fish, by day', async ($, on) 
     expect(svg).toMatch(/stroke-dashoffset/)
     expect(svg).toMatch(/data-fish/)
     expect(svg).not.toMatch(/#e8ff7a/)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -51,11 +51,11 @@ test('at work it is night and the water runs harder; a finished turn draws it af
   await $.tool.call({ tool: 'Read', file_path: '/x' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 2회')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 2')
   expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/#e8ff7a/)
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+  expect(await text(ui, /Idle/)).toBe('Idle')
   expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/data-visitor/)
   await ui.unmount()
 })
@@ -84,7 +84,7 @@ test('the terminal gets a still text waterfall', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

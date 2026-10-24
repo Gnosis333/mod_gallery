@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'moon-view',
   props: {
-    title: '달',
+    title: 'Moon',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -46,7 +46,7 @@ test('the Moon at rest: the Earth in the sky, a lander whose eyes blink, and an 
     expect(svg).toMatch(/#cfe8ff/)
     expect(svg).not.toMatch(/values="0;360" dur="1.5s"/)
     expect(svg.length).toBeLessThan(131072)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -59,7 +59,7 @@ test('while Claude works the lander flickers and the astronaut tumbles in the ai
   await $.tool.call({ tool: 'Read', file_path: '/x' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 2회')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 2')
   const busy = await source(ui)
   expect(busy).toMatch(/#fff2a8/)
   expect(busy).toMatch(/values="0;360" dur="1.5s"/)
@@ -67,7 +67,7 @@ test('while Claude works the lander flickers and the astronaut tumbles in the ai
   expect(busy.length).toBeLessThan(131072)
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+  expect(await text(ui, /Idle/)).toBe('Idle')
   expect(await source(ui)).not.toMatch(/#fff2a8/)
   await ui.unmount()
 })
@@ -78,7 +78,7 @@ test('the terminal gets a still text Moon', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

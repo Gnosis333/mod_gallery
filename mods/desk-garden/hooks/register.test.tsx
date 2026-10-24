@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'desk-garden',
   props: {
-    title: '책상 위 화분',
+    title: 'Desk garden',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -26,7 +26,7 @@ test('the pane stacks the window room and the workshop as SVGs off the terminal'
     const svg = await ui.find({ type: 'Svg' })
 
     expect(JSON.stringify(svg)).toMatch(/animateMotion/)
-    expect((await ui.find({ type: 'Text', text: /꽃 0\/12/ }))?.text).toBe('꽃 0/12 · 완료 0턴 · 도구 0회')
+    expect((await ui.find({ type: 'Text', text: /Flowers 0\/12/ }))?.text).toBe('Flowers 0/12 · turns done 0 · tools 0')
     await ui.unmount()
   }
 })
@@ -44,10 +44,10 @@ test('a finished turn blooms a flower and a tool call is counted', async ($, on)
   await $.tool.call({ tool: 'Bash', command: 'ls' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect((await ui.find({ type: 'Text', text: /도구 1회/ }))?.text).toBe('꽃 0/12 · 완료 0턴 · 도구 1회')
+  expect((await ui.find({ type: 'Text', text: /tools 1/ }))?.text).toBe('Flowers 0/12 · turns done 0 · tools 1')
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect((await ui.find({ type: 'Text', text: /완료 1턴/ }))?.text).toBe('꽃 1/12 · 완료 1턴 · 도구 1회')
+  expect((await ui.find({ type: 'Text', text: /turns done 1/ }))?.text).toBe('Flowers 1/12 · turns done 1 · tools 1')
   await ui.unmount()
 })
 
@@ -60,7 +60,7 @@ test('the terminal gets a still text flowerpot', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

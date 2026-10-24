@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Work } from '../types'
 
 const PANE = 'desk-garden'
-const TITLE = '책상 위 화분'
-const ALT = '창가 책상 위 화분에 꽃 다섯 송이가 바람에 흔들리고, 창밖으로 새와 곤충이 지나갑니다.'
+const TITLE = 'Desk garden'
+const ALT = 'A flowerpot on a desk by a window: five flowers sway in the breeze while birds and insects pass outside.'
 
 // ---scene-start
 type Attrs = Record<string, string | number>
@@ -475,7 +475,7 @@ const workshop = (w: Look) => {
   const glowFrom = w.prev ? 1 : 0
   const glowTo = lit ? 1 : 0
 
-  const label = { work: '작업 중…', cheer: '완료! 꽃이 피었어요', rest: '쉬는 중' }[mood]
+  const label = { work: 'Working…', cheer: 'Done! A flower bloomed', rest: 'Idle' }[mood]
   const pillW = mood === 'cheer' ? 196 : 126
   const dot = { work: '#5fae6b', cheer: '#e0b050', rest: '#9aa3a8' }[mood]
 
@@ -661,7 +661,7 @@ const glyphColor = (ch: string) =>
   ('╭╮╯╰─┴'.includes(ch) ? '#c9714a' : '#5f9457')
 
 const ALT_WORK =
-  'Claude가 일하는 동안 램프가 켜지고 캐릭터가 타이핑하며, 한 턴이 끝날 때마다 화단에 꽃이 한 송이씩 핍니다.'
+  'While Claude works the lamp comes on and the character types; each finished turn opens one more flower in the bed.'
 
 const work = atom(
   { plugin: 'desk-garden', key: 'work' } as const,
@@ -681,7 +681,7 @@ export const register: Register = on => {
   on('command.run', { command: 'garden' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '책상 위 화분을 열었습니다.' }
+    return { text: 'Opened the desk garden pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude "at the desk".
@@ -720,7 +720,7 @@ export const register: Register = on => {
     const els = $.ui.resolve(e)
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = `꽃 ${bloomsOf(w.done)}/${GARDEN_SLOTS} · 완료 ${w.done}턴 · 도구 ${w.tools}회`
+    const line = `Flowers ${bloomsOf(w.done)}/${GARDEN_SLOTS} · turns done ${w.done} · tools ${w.tools}`
     // The pane's width in px: its cells over the code font's advance (about 7.6 px).
     const width = Math.max(160, Math.round(cols * 7.6))
     const height = Math.round((width * HALF_H) / HALF_W)
@@ -750,9 +750,9 @@ export const register: Register = on => {
             ))}
           </Box>
         ))}
-        <Text>{w.working ? '● 작업 중' : '○ 쉬는 중'}</Text>
+        <Text>{w.working ? '● Working' : '○ Idle'}</Text>
         <Text dimColor>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

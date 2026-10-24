@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Dive } from '../types'
 
 const PANE = 'deep-sub'
-const TITLE = '심해'
-const ALT = '깊은 바다 속 잠수정. 야광 해파리와 아귀, 샛비늘치 떼가 지나가고, 저 아래 어둠 속에서 알 수 없는 거대한 것이 희미하게 움직입니다.'
+const TITLE = 'Deep sea'
+const ALT = 'A submersible in the deep sea. Glowing jellyfish, an anglerfish and lanternfish drift by while something vast and unknowable stirs faintly far below.'
 
 // ---scene-start
 type Sub = { working: boolean }
@@ -331,7 +331,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Dive, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Dive, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const dive = atom({ plugin: 'deep-sub', key: 'dive' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Dive)
 
@@ -359,7 +359,7 @@ export const register: Register = on => {
   on('command.run', { command: 'deep' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '심해를 열었습니다.' }
+    return { text: 'Opened the deep-sea pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -426,7 +426,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

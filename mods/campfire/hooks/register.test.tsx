@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'campfire',
   props: {
-    title: '모닥불',
+    title: 'Campfire',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -56,7 +56,7 @@ test('at rest a small fire crackles: flames, sparks, flowers, the fox and the ow
     expect(svg).toMatch(/fill="#1a1a20"/)
     expect(svg).toMatch(/stroke="#4a3220"/)
     expect(svg.match(/fill="#5a3c22"/g)?.length).toBe(6)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -87,7 +87,7 @@ test('the terminal gets a still text campfire', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

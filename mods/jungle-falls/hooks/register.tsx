@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Falls } from '../types'
 
 const PANE = 'jungle-falls'
-const TITLE = '정글'
-const ALT = '정글 속 계단식 폭포가 굽이쳐 내려와 연꽃 연못으로 떨어지고, 동물들이 무작위로 찾아옵니다.'
+const TITLE = 'Jungle'
+const ALT = 'A terraced waterfall winds down through the jungle into a lily pool, and animals drop by at random.'
 
 const KINDS = 24 // kinds of animal; 13 to 17 swim
 const SLOTS = 1 // each kind visits at its own times
@@ -894,7 +894,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Falls, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Falls, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const jungle = atom(
   { plugin: 'jungle-falls', key: 'calm' } as const,
@@ -925,7 +925,7 @@ export const register: Register = on => {
   on('command.run', { command: 'falls' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '정글 폭포를 열었습니다.' }
+    return { text: 'Opened the jungle pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -995,7 +995,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'rain-window',
   props: {
-    title: '창가',
+    title: 'Rainy window',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -43,7 +43,7 @@ test('at first the rain is light: drops run down the glass, no lightning and no 
     expect(svg).not.toMatch(/values="1;1;0;0;0;0;1;1"/)
     expect(svg).not.toMatch(/values="1;1;\.1;\.9;\.2;\.8;1;1"/)
     expect(svg).not.toMatch(/#ff4d4d/)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -56,7 +56,7 @@ test('at work the rain pours and lightning flashes; when it is done a rainbow co
   await $.tool.call({ tool: 'Read', file_path: '/x' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 2회')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 2')
   const storm = await source(ui)
   expect(storm).toMatch(/#f4f0ff/)
   // the cat's eyes open with each of the two lightning strokes
@@ -70,7 +70,7 @@ test('at work the rain pours and lightning flashes; when it is done a rainbow co
   expect(storm).not.toMatch(/#ff4d4d/)
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+  expect(await text(ui, /Idle/)).toBe('Idle')
   const calm = await source(ui)
   expect(calm).toMatch(/#ff4d4d/)
   expect(calm).not.toMatch(/#f4f0ff/)
@@ -85,7 +85,7 @@ test('the terminal gets a still text window', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

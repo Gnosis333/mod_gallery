@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'tower-cut',
   props: {
-    title: '빌딩',
+    title: 'Tower',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -38,7 +38,7 @@ test('the pane draws an empty lot at first, with no scaffolding and no fireworks
     expect(svg).toMatch(/animateTransform/)
     expect(svg).not.toMatch(/#f08a1c/)
     expect(svg).not.toMatch(/data-fx/)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중 · 1번째 빌딩 0/20층 · 준공 0채')
+    expect(await text(ui, /Idle/)).toBe('Idle · tower 1 0/20 floors · completed 0')
     await ui.unmount()
   }
 })
@@ -51,11 +51,11 @@ test('at work a floor goes up under scaffolding; a finished turn completes it', 
   await $.tool.call({ tool: 'Read', file_path: '/x' })
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 2회 · 1층 공사')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 2 · building floor 1')
   expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/#f08a1c/)
 
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중 · 1번째 빌딩 1/20층 · 준공 0채')
+  expect(await text(ui, /Idle/)).toBe('Idle · tower 1 1/20 floors · completed 0')
   expect(JSON.stringify(await ui.find({ type: 'Svg' }))).not.toMatch(/#f08a1c/)
   await ui.unmount()
 })
@@ -69,15 +69,15 @@ test('twenty answers top the tower out; the next turn starts a new one beside it
   }
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  expect(await text(ui, /준공!/)).toBe('준공! · 1번째 빌딩 20/20층 · 준공 1채')
+  expect(await text(ui, /Topped out!/)).toBe('Topped out! · tower 1 20/20 floors · completed 1')
   const svg = JSON.stringify(await ui.find({ type: 'Svg' }))
   expect(svg).toMatch(/data-fx/)
   expect(svg.length).toBeLessThan(130000)
 
   await $.turn.start({ text: 'again' })
-  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 0회 · 1층 공사')
+  expect(await text(ui, /Working/)).toBe('Working 00:00 · tools 0 · building floor 1')
   await $.turn.complete({ reason: 'answer', text: 'ok' })
-  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중 · 2번째 빌딩 1/20층 · 준공 1채')
+  expect(await text(ui, /Idle/)).toBe('Idle · tower 2 1/20 floors · completed 1')
   await ui.unmount()
 })
 
@@ -87,7 +87,7 @@ test('the terminal gets a still text building', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

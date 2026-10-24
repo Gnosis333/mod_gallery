@@ -5,7 +5,7 @@ const PANE = {
   component: 'Pane',
   requestId: 'snow-cabin',
   props: {
-    title: '눈 오는 오두막',
+    title: 'Snowy cabin',
     isFocused: false,
     bodyColumns: 40,
     placement: 'dock',
@@ -53,7 +53,7 @@ test('by day the snow falls softly: no night, no lit windows, no snowmen yet, an
     expect(svg).toMatch(/#6ac6ff/)
     // eighty-odd flakes
     expect(svg.match(/<circle r="[\d.]+" fill="#fff" opacity="0?\.\d+">/g)?.length).toBe(84)
-    expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+    expect(await text(ui, /Idle/)).toBe('Idle')
     await ui.unmount()
   }
 })
@@ -93,7 +93,7 @@ test('the terminal gets a still text cabin', async ($, on) => {
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
 
-  expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  expect(await ui.find({ type: 'Text', text: /desktop app/ })).toBeTruthy()
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })

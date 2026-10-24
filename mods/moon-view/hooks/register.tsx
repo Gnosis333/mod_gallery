@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Moon } from '../types'
 
 const PANE = 'moon-view'
-const TITLE = '달'
-const ALT = '달 표면에서 본 우주. 달착륙선 옆에서 우주인이 통통 뛰고, 하늘에는 지구가 떠 있으며, 별똥별과 로켓, 위성, UFO, 행성이 무작위로 지나갑니다.'
+const TITLE = 'Moon'
+const ALT = 'The universe seen from the Moon. An astronaut bounces beside the lander, the Earth hangs in the sky, and shooting stars, rockets, satellites, UFOs and planets pass at random.'
 
 // ---scene-start
 const W = 400
@@ -418,7 +418,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Moon, now: number) => (w.working ? `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회` : '쉬는 중')
+const label = (w: Moon, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
 
 const moon = atom(
   { plugin: 'moon-view', key: 'surface' } as const,
@@ -449,7 +449,7 @@ export const register: Register = on => {
   on('command.run', { command: 'moon' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '달 표면을 열었습니다.' }
+    return { text: 'Opened the moon pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -517,7 +517,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })

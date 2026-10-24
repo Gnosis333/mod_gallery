@@ -4,8 +4,8 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Tower } from '../types'
 
 const PANE = 'tower-cut'
-const TITLE = '빌딩'
-const ALT = '층마다 방 안이 보이는 빌딩 단면. 턴이 끝날 때마다 한 층씩 올라가고, 20층이 되면 불꽃놀이와 함께 준공됩니다.'
+const TITLE = 'Tower'
+const ALT = 'A cross-section of a building where you can see into every room. A floor goes up with each finished turn, and at 20 floors it tops out with fireworks.'
 
 // ---scene-start
 const W = 400
@@ -396,13 +396,13 @@ const clock = (ms: number) => {
 
 const label = (w: Tower, now: number) => {
   if (w.working) {
-    return `작업 중 ${clock(now - w.startedAt)} · 도구 ${w.tools}회 · ${Math.min(MAX, w.floors + 1)}층 공사`
+    return `Working ${clock(now - w.startedAt)} · tools ${w.tools} · building floor ${Math.min(MAX, w.floors + 1)}`
   }
   if (w.floors >= MAX) {
-    return `준공! · ${w.towers + 1}번째 빌딩 ${MAX}/${MAX}층 · 준공 ${w.towers + 1}채`
+    return `Topped out! · tower ${w.towers + 1} ${MAX}/${MAX} floors · completed ${w.towers + 1}`
   }
 
-  return `쉬는 중 · ${w.towers + 1}번째 빌딩 ${w.floors}/${MAX}층 · 준공 ${w.towers}채`
+  return `Idle · tower ${w.towers + 1} ${w.floors}/${MAX} floors · completed ${w.towers}`
 }
 
 const tower = atom(
@@ -434,7 +434,7 @@ export const register: Register = on => {
   on('command.run', { command: 'tower' }, async $ => {
     await $.ui.open({ id: PANE, title: TITLE })
 
-    return { text: '빌딩을 열었습니다.' }
+    return { text: 'Opened the tower pane.' }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -512,7 +512,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>그림 움직임은 데스크톱 앱에서 보입니다.</Text>
+        <Text dimColor>The animation shows in the desktop app.</Text>
       </Box>
     )
   })
