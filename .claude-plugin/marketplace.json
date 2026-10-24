@@ -1,0 +1,73 @@
+{
+  "name": "mod-gallery",
+  "owner": {
+    "name": "Gnosis333"
+  },
+  "plugins": [
+    {
+      "name": "haiku-warning",
+      "source": "./mods/haiku-warning",
+      "description": "Shows a red warning above the prompt while a Haiku model is selected"
+    },
+    {
+      "name": "usage-band",
+      "source": "./mods/usage-band",
+      "description": "One-line band above the prompt: context, 5-hour and 7-day limits and cost, in graphite tones"
+    },
+    {
+      "name": "desk-garden",
+      "source": "./mods/desk-garden",
+      "description": "A desk by a window with a flowerpot in a pane; a workshop below reacts to what Claude is doing. Opens with /garden"
+    },
+    {
+      "name": "reef-tank",
+      "source": "./mods/reef-tank",
+      "description": "A tall aquarium pane: fish, seahorse, jellyfish; at work the light darkens and a yellow submarine dives. Opens with /reef"
+    },
+    {
+      "name": "tower-cut",
+      "source": "./mods/tower-cut",
+      "description": "A tall building cross-section pane: every finished turn adds a floor; at 20 floors the tower tops out with fireworks. Opens with /tower"
+    },
+    {
+      "name": "jungle-falls",
+      "source": "./mods/jungle-falls",
+      "description": "A tall jungle pane: terraced waterfalls wind into a lily pool and 24 kinds of animals drop by at random; night while Claude works. Opens with /falls"
+    },
+    {
+      "name": "rain-window",
+      "source": "./mods/rain-window",
+      "description": "A tall rainy-window pane: drops run down the glass, city lights blur outside, a cat dozes on the sill; storm and lightning while Claude works, a rainbow when done. Opens with /rain"
+    },
+    {
+      "name": "moon-view",
+      "source": "./mods/moon-view",
+      "description": "A tall pane on the Moon looking at the Earth: a lander and a bouncing astronaut below, and planets, a black hole, rockets, a UFO and starships passing at random. Opens with /moon"
+    },
+    {
+      "name": "night-train",
+      "source": "./mods/night-train",
+      "description": "A tall night-train window pane: waits at a lamp-lit station at rest; while Claude works hills, trees and poles stream past and tunnels flash by, then it pulls in again. Opens with /train"
+    },
+    {
+      "name": "beach-day",
+      "source": "./mods/beach-day",
+      "description": "A tall top-down beach pane: gentle waves, sunbathers in sunglasses under parasols, swimmers on rings with a pink unicorn among them; a jet ski and a banana boat while Claude works. Opens with /beach"
+    },
+    {
+      "name": "snow-cabin",
+      "source": "./mods/snow-cabin",
+      "description": "A tall snowy-cabin pane: soft snowfall over a white forest and snowy peaks, a white rabbit, a white fox and a magpie; at work night falls, the windows glow, the chimney smokes and snowmen are built one by one. Opens with /snow"
+    },
+    {
+      "name": "deep-sub",
+      "source": "./mods/deep-sub",
+      "description": "A tall deep-sea pane: a submersible among glowing jellyfish, an anglerfish, lanternfish and something vast below; at work the searchlight comes on, sonar pings and a giant squid's shadow sweeps past. Opens with /deep"
+    },
+    {
+      "name": "campfire",
+      "source": "./mods/campfire",
+      "description": "A tall campfire pane in a deep forest under the stars: flickering flames, crackling sparks, flowers round the clearing, a passing fox and an owl that swivels its head; the fire roars while Claude works and dies back after. Opens with /fire"
+    }
+  ]
+}

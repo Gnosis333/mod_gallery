@@ -1,0 +1,10 @@
+{
+  "name": "reef-tank",
+  "version": "0.3.1",
+  "description": "A tall aquarium pane: tropical fish, seahorse and jellyfish above a coral floor; at work the pump runs, the lights come up and a yellow submarine goes down.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

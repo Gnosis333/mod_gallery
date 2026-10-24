@@ -1,0 +1,10 @@
+{
+  "name": "deep-sub",
+  "version": "0.1.0",
+  "description": "A tall deep-sea pane: a little submersible hangs in the dark while glowing jellyfish, an anglerfish and lanternfish drift by and something vast and unknowable stirs far below. While Claude works its searchlight comes on, sonar pings, and now and then the shadow of a giant squid sweeps past.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "moon-view",
+  "version": "0.1.0",
+  "description": "A tall pane on the Moon looking at the Earth: a lander and a bouncing astronaut on the surface below, and above them stars with supernovae, a black hole, rockets, satellites, a UFO and planets passing at random.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

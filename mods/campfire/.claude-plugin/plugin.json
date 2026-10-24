@@ -1,0 +1,10 @@
+{
+  "name": "campfire",
+  "version": "0.1.0",
+  "description": "A tall campfire pane in a deep forest under the stars: flames lick and sparks crackle up, flowers ring the clearing, forested ridges rise behind, and now and then a fox trots by or an owl perches and swivels its head. While Claude works the fire roars up; when it is done it dies back down.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

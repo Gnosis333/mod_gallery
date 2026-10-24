@@ -1,0 +1,10 @@
+{
+  "name": "usage-band",
+  "version": "0.1.0",
+  "description": "One line above the prompt: context window fill, plan limits and session cost, amber at 70% and brick red at 85%, in graphite tones",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

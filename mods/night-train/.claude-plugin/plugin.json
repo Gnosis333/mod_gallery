@@ -1,0 +1,10 @@
+{
+  "name": "night-train",
+  "version": "0.1.1",
+  "description": "A tall night-train window pane: at rest the train waits at a lamp-lit station; while Claude works it runs through the night, hills, trees and poles streaming past, and when the turn ends it pulls into the station again.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

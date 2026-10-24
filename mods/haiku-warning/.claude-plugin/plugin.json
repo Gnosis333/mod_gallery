@@ -1,0 +1,10 @@
+{
+  "name": "haiku-warning",
+  "version": "0.1.0",
+  "description": "Shows a red warning above the prompt while a Haiku model is selected",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

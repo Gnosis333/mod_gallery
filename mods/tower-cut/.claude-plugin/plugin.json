@@ -1,0 +1,10 @@
+{
+  "name": "tower-cut",
+  "version": "0.1.0",
+  "description": "A tall building cross-section pane: every finished turn adds a floor; at 20 floors the tower tops out with fireworks and a new one starts beside it.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}

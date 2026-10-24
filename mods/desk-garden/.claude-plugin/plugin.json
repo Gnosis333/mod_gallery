@@ -1,0 +1,10 @@
+{
+  "name": "desk-garden",
+  "version": "0.2.0",
+  "description": "A tall pane: a window room with cat and fish tank above, and Claude's workshop below that reacts to what Claude is doing.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Gnosis333"
+  },
+  "homepage": "https://github.com/Gnosis333/mod_gallery"
+}
