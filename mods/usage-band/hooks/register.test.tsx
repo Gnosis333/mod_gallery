@@ -138,3 +138,12 @@ test('each limit shows when it starts over: the 5-hour one as a clock time, the 
   expect((await ui.find({ type: 'Text', text: new RegExp(` ↻${week.getMonth() + 1}/${week.getDate()}$`) })) as any).toBeTruthy()
   await ui.unmount()
 })
+
+test('with language set to ko the labels are Korean', { options: { language: 'ko' } }, async ($, on) => {
+  await setup($, on, usage(52))
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect((await texts(ui, /컨텍스트/)).text).toBe('컨텍스트 ')
+  expect((await texts(ui, /5시간/)).props.color).toBe('#86a695')
+  await ui.unmount()
+})

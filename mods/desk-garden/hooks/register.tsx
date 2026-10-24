@@ -4,8 +4,32 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Work } from '../types'
 
 const PANE = 'desk-garden'
-const TITLE = 'Desk garden'
-const ALT = 'A flowerpot on a desk by a window: five flowers sway in the breeze while birds and insects pass outside.'
+const STRINGS = {
+  en: {
+    title: 'Desk garden',
+    alt: 'A flowerpot on a desk by a window: five flowers sway in the breeze while birds and insects pass outside.',
+    altWork: 'While Claude works the lamp comes on and the character types; each finished turn opens one more flower in the bed.',
+    bubble: { work: 'Working…', cheer: 'Done! A flower bloomed', rest: 'Idle' },
+    line: (blooms: number, slots: number, done: number, tools: number) => `Flowers ${blooms}/${slots} · turns done ${done} · tools ${tools}`,
+    on: '● Working',
+    off: '○ Idle',
+    opened: 'Opened the desk garden pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '책상 위 화분',
+    alt: '창가 책상 위 화분에 꽃 다섯 송이가 바람에 흔들리고, 창밖으로 새와 곤충이 지나갑니다.',
+    altWork: 'Claude가 일하는 동안 램프가 켜지고 캐릭터가 타이핑하며, 한 턴이 끝날 때마다 화단에 꽃이 한 송이씩 핍니다.',
+    bubble: { work: '작업 중…', cheer: '완료! 꽃이 피었어요', rest: '쉬는 중' },
+    line: (blooms: number, slots: number, done: number, tools: number) => `꽃 ${blooms}/${slots} · 완료 ${done}턴 · 도구 ${tools}회`,
+    on: '● 작업 중',
+    off: '○ 쉬는 중',
+    opened: '책상 위 화분을 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 type Attrs = Record<string, string | number>
@@ -466,7 +490,7 @@ const sparkle = (x: number, y: number, begin: number) =>
   `<path d="M${x} ${y - 6} L${x + 1.8} ${y - 1.8} L${x + 6} ${y} L${x + 1.8} ${y + 1.8} L${x} ${y + 6} L${x - 1.8} ${y + 1.8} L${x - 6} ${y} L${x - 1.8} ${y - 1.8}Z" fill="#ffd96a" opacity="0">` +
   `<animate attributeName="opacity" values="0;1;0" dur="1.6s" begin="${begin}s" repeatCount="indefinite"/></path>`
 
-const workshop = (w: Look) => {
+const workshop = (w: Look, bubble: { work: string; cheer: string; rest: string }) => {
   const blooms = bloomsOf(w.done)
   const mood = w.working ? 'work' : w.fresh ? 'cheer' : 'rest'
   const lit = mood !== 'rest'
@@ -475,7 +499,7 @@ const workshop = (w: Look) => {
   const glowFrom = w.prev ? 1 : 0
   const glowTo = lit ? 1 : 0
 
-  const label = { work: 'Working…', cheer: 'Done! A flower bloomed', rest: 'Idle' }[mood]
+  const label = bubble[mood]
   const pillW = mood === 'cheer' ? 196 : 126
   const dot = { work: '#5fae6b', cheer: '#e0b050', rest: '#9aa3a8' }[mood]
 
@@ -660,15 +684,15 @@ const glyphColor = (ch: string) =>
   ({ '✿': '#f3d35a', '❀': '#e58fa6', '❁': '#e2735a', '✾': '#9b7fd1' })[ch] ??
   ('╭╮╯╰─┴'.includes(ch) ? '#c9714a' : '#5f9457')
 
-const ALT_WORK =
-  'While Claude works the lamp comes on and the character types; each finished turn opens one more flower in the bed.'
-
 const work = atom(
   { plugin: 'desk-garden', key: 'work' } as const,
   { working: false, prev: false, done: 0, fresh: false, tools: 0 } as Work,
 )
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'garden',
@@ -679,9 +703,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'garden' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the desk garden pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude "at the desk".
@@ -720,7 +744,7 @@ export const register: Register = on => {
     const els = $.ui.resolve(e)
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = `Flowers ${bloomsOf(w.done)}/${GARDEN_SLOTS} · turns done ${w.done} · tools ${w.tools}`
+    const line = T.line(bloomsOf(w.done), GARDEN_SLOTS, w.done, w.tools)
     // The pane's width in px: its cells over the code font's advance (about 7.6 px).
     const width = Math.max(160, Math.round(cols * 7.6))
     const height = Math.round((width * HALF_H) / HALF_W)
@@ -733,8 +757,8 @@ export const register: Register = on => {
           <Box justifyContent="center">
             <Text dimColor>{line}</Text>
           </Box>
-          <Svg source={scene.top} alt={ALT} width={width} height={height} isInteractive />
-          <Svg source={scene.work(w)} alt={ALT_WORK} width={width} height={height} isInteractive />
+          <Svg source={scene.top} alt={T.alt} width={width} height={height} isInteractive />
+          <Svg source={scene.work(w, T.bubble)} alt={T.altWork} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -750,9 +774,9 @@ export const register: Register = on => {
             ))}
           </Box>
         ))}
-        <Text>{w.working ? '● Working' : '○ Idle'}</Text>
+        <Text>{w.working ? T.on : T.off}</Text>
         <Text dimColor>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

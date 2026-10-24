@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Falls } from '../types'
 
 const PANE = 'jungle-falls'
-const TITLE = 'Jungle'
-const ALT = 'A terraced waterfall winds down through the jungle into a lily pool, and animals drop by at random.'
+const STRINGS = {
+  en: {
+    title: 'Jungle',
+    alt: 'A terraced waterfall winds down through the jungle into a lily pool, and animals drop by at random.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the jungle pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '정글',
+    alt: '정글 속 계단식 폭포가 굽이쳐 내려와 연꽃 연못으로 떨어지고, 동물들이 무작위로 찾아옵니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '정글 폭포를 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 const KINDS = 24 // kinds of animal; 13 to 17 swim
 const SLOTS = 1 // each kind visits at its own times
@@ -894,7 +912,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Falls, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Falls, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const jungle = atom(
   { plugin: 'jungle-falls', key: 'calm' } as const,
@@ -905,7 +923,10 @@ const jungle = atom(
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -923,9 +944,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'falls' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the jungle pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -961,7 +982,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -982,7 +1003,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -995,7 +1016,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

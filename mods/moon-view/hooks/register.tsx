@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Moon } from '../types'
 
 const PANE = 'moon-view'
-const TITLE = 'Moon'
-const ALT = 'The universe seen from the Moon. An astronaut bounces beside the lander, the Earth hangs in the sky, and shooting stars, rockets, satellites, UFOs and planets pass at random.'
+const STRINGS = {
+  en: {
+    title: 'Moon',
+    alt: 'The universe seen from the Moon. An astronaut bounces beside the lander, the Earth hangs in the sky, and shooting stars, rockets, satellites, UFOs and planets pass at random.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the moon pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '달',
+    alt: '달 표면에서 본 우주. 달착륙선 옆에서 우주인이 통통 뛰고, 하늘에는 지구가 떠 있으며, 별똥별과 로켓, 위성, UFO, 행성이 무작위로 지나갑니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '달 표면을 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 const W = 400
@@ -418,7 +436,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Moon, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Moon, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const moon = atom(
   { plugin: 'moon-view', key: 'surface' } as const,
@@ -429,7 +447,10 @@ const moon = atom(
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -447,9 +468,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'moon' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the moon pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -484,7 +505,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -504,7 +525,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -517,7 +538,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Rain } from '../types'
 
 const PANE = 'rain-window'
-const TITLE = 'Rainy window'
-const ALT = 'A rainy window. Drops run down the glass and merge, city lights blur outside, and a cat dozes on the sill.'
+const STRINGS = {
+  en: {
+    title: 'Rainy window',
+    alt: 'A rainy window. Drops run down the glass and merge, city lights blur outside, and a cat dozes on the sill.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the rainy-window pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '창가',
+    alt: '비 오는 창가. 빗방울이 유리를 타고 내려가며 합쳐지고, 밖으로 도시 불빛이 번지며, 고양이가 창턱에서 졸고 있습니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '창가를 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 const W = 400
@@ -369,7 +387,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Rain, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Rain, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const rain = atom(
   { plugin: 'rain-window', key: 'window' } as const,
@@ -380,7 +398,10 @@ const rain = atom(
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -398,9 +419,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'rain' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the rainy-window pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -435,7 +456,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -457,7 +478,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -470,7 +491,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

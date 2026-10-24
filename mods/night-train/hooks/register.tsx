@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Train } from '../types'
 
 const PANE = 'night-train'
-const TITLE = 'Night train'
-const ALT = 'A night-train window. At rest it waits at a lamp-lit station; while Claude works, hills, trees and poles stream past the glass.'
+const STRINGS = {
+  en: {
+    title: 'Night train',
+    alt: 'A night-train window. At rest it waits at a lamp-lit station; while Claude works, hills, trees and poles stream past the glass.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the night-train pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '야간열차',
+    alt: '야간열차의 창가. 쉴 때는 가로등이 켜진 역에 서 있고, 일할 때는 산과 나무와 전신주가 창밖으로 흘러갑니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '야간열차를 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 type Ride = { working: boolean; startedAt: number; endedAt: number; travelled: number }
@@ -331,7 +349,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Train, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Train, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const ride = atom(
   { plugin: 'night-train', key: 'ride' } as const,
@@ -342,7 +360,10 @@ const ride = atom(
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -362,9 +383,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'train' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the night-train pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -404,7 +425,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -427,7 +448,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -440,7 +461,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

@@ -68,3 +68,13 @@ test('picking Haiku shows the warning without a prompt, and leaving hides it', a
   expect(await ui.find({ type: 'Text', text: /Haiku/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('with language set to ko the warning is Korean', { options: { language: 'ko' } }, async ($, on) => {
+  await start($, on, 'claude-haiku-5-5')
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  const row = await ui.find({ type: 'Text', text: /Haiku/ })
+  expect(row?.text).toContain('주의')
+  expect(row?.text).toContain('claude-haiku-5-5')
+  await ui.unmount()
+})

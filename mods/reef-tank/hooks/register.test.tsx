@@ -66,3 +66,12 @@ test('the terminal gets a still text aquarium', async ($, on) => {
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })
+
+test('with language set to ko the labels are Korean', { options: { language: 'ko' } }, async ($, on) => {
+  answers(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /쉬는 중/ }))?.text).toBe('쉬는 중 · 진주 0개')
+  await ui.unmount()
+})

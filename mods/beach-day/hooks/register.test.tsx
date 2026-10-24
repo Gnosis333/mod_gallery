@@ -82,3 +82,19 @@ test('the terminal gets a still text beach', async ($, on) => {
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })
+
+test('with language set to ko the labels are Korean', { options: { language: 'ko' } }, async ($, on) => {
+  answers(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중')
+  await $.turn.start({ text: 'hi' })
+  await $.tool.call({ tool: 'Bash', command: 'ls' })
+  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 1회')
+  await ui.unmount()
+
+  const terminal = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await terminal.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
+  await terminal.unmount()
+})

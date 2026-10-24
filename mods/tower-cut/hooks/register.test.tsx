@@ -91,3 +91,14 @@ test('the terminal gets a still text building', async ($, on) => {
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })
+
+test('with language set to ko the labels are Korean', { options: { language: 'ko' } }, async ($, on) => {
+  answers(on)
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await text(ui, /쉬는 중/)).toBe('쉬는 중 · 1번째 빌딩 0/20층 · 준공 0채')
+  await $.turn.start({ text: 'hi' })
+  expect(await text(ui, /작업 중/)).toBe('작업 중 00:00 · 도구 0회 · 1층 공사')
+  await ui.unmount()
+})

@@ -4,8 +4,28 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Tower } from '../types'
 
 const PANE = 'tower-cut'
-const TITLE = 'Tower'
-const ALT = 'A cross-section of a building where you can see into every room. A floor goes up with each finished turn, and at 20 floors it tops out with fireworks.'
+const STRINGS = {
+  en: {
+    title: 'Tower',
+    alt: 'A cross-section of a building where you can see into every room. A floor goes up with each finished turn, and at 20 floors it tops out with fireworks.',
+    working: (clock: string, tools: number, floor: number) => `Working ${clock} · tools ${tools} · building floor ${floor}`,
+    topped: (tower: number, max: number) => `Topped out! · tower ${tower} ${max}/${max} floors · completed ${tower}`,
+    idle: (tower: number, floors: number, max: number, done: number) => `Idle · tower ${tower} ${floors}/${max} floors · completed ${done}`,
+    opened: 'Opened the tower pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '빌딩',
+    alt: '층마다 방 안이 보이는 빌딩 단면. 턴이 끝날 때마다 한 층씩 올라가고, 20층이 되면 불꽃놀이와 함께 준공됩니다.',
+    working: (clock: string, tools: number, floor: number) => `작업 중 ${clock} · 도구 ${tools}회 · ${floor}층 공사`,
+    topped: (tower: number, max: number) => `준공! · ${tower}번째 빌딩 ${max}/${max}층 · 준공 ${tower}채`,
+    idle: (tower: number, floors: number, max: number, done: number) => `쉬는 중 · ${tower}번째 빌딩 ${floors}/${max}층 · 준공 ${done}채`,
+    opened: '빌딩을 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 const W = 400
@@ -394,15 +414,15 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Tower, now: number) => {
+const label = (w: Tower, now: number, T: Words) => {
   if (w.working) {
-    return `Working ${clock(now - w.startedAt)} · tools ${w.tools} · building floor ${Math.min(MAX, w.floors + 1)}`
+    return T.working(clock(now - w.startedAt), w.tools, Math.min(MAX, w.floors + 1))
   }
   if (w.floors >= MAX) {
-    return `Topped out! · tower ${w.towers + 1} ${MAX}/${MAX} floors · completed ${w.towers + 1}`
+    return T.topped(w.towers + 1, MAX)
   }
 
-  return `Idle · tower ${w.towers + 1} ${w.floors}/${MAX} floors · completed ${w.towers}`
+  return T.idle(w.towers + 1, w.floors, MAX, w.towers)
 }
 
 const tower = atom(
@@ -414,7 +434,10 @@ const tower = atom(
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -432,9 +455,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'tower' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the tower pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -479,7 +502,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -499,7 +522,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -512,7 +535,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

@@ -31,6 +31,16 @@ Swap `night-train` for any mod below. Panels open **only when you run their slas
 
 To try one mod without installing: `claude --plugin-dir mods/night-train`.
 
+### Language
+
+Labels (the status line, descriptions, replies) are **English by default**. Every mod also has a Korean (한국어) mode through its `language` option:
+
+```bash
+echo '{"language":"ko"}' | claude plugin configure night-train@mod-gallery --values-stdin
+```
+
+Then restart Claude Code. You can also run `/plugin configure night-train@mod-gallery` inside Claude Code, and `claude plugin configure night-train@mod-gallery` shows whether it is set. Use `en` to switch back.
+
 ## Mods
 
 | Mod | Command | What it is |
@@ -141,7 +151,7 @@ Shows a red warning above the prompt while a Haiku model is selected, as a remin
 
 - **CPU**: moving pictures redraw constantly, so several panels open at once add up. Open only what you use. They don't affect model response speed, only drawing, heat and battery. `jungle-falls`, `snow-cabin` and `campfire` are larger pictures and relatively heavier.
 - **Layout**: each mod lives in `mods/<name>/` with `.claude-plugin/plugin.json`, `hooks/register.tsx` (the behaviour), a test file and a state type. The part of `register.tsx` between `// ---scene-start` and `// ---scene-end` is what draws the picture.
-- **Labels are in English.** A Korean-labelled version of these mods exists in my own setup; ask if you want it.
+- **Languages**: English (default) and Korean, chosen per mod with the `language` option (see [Language](#language)). The pictures themselves contain no text, except a few English words such as `STATION` and the speech bubble in `desk-garden`.
 
 Built with [Claude Code](https://claude.com/claude-code).
 
@@ -167,6 +177,14 @@ Claude Code 옆에 띄워 두는 **그림 패널**과 입력창 위 **상태 띠
 
 `night-train` 자리에 위 표의 모드 이름을 넣으면 됩니다. 패널은 **슬래시 명령으로 열 때만** 열립니다(CPU를 아끼려고 자동으로 열지 않습니다). 설치 후 `/reload-plugins`를 입력하거나 새 세션을 여세요.
 
+**한글 라벨로 보려면** 모드마다 `language` 옵션을 `ko`로 정하고 Claude Code를 다시 시작하세요(기본은 영어).
+
+```bash
+echo '{"language":"ko"}' | claude plugin configure night-train@mod-gallery --values-stdin
+```
+
+`/plugin configure night-train@mod-gallery`로도 정할 수 있습니다. 영어로 되돌리려면 `en`을 쓰세요.
+
 ### 모드 설명
 
 - **night-train** (`/train`): 야간열차 창가. 쉴 때는 `STATION`에 정차해 가로등이 켜져 있고, 작업 중에는 산·나무·전신주가 서로 다른 속도로 흘러가며 가끔 긴 터널을 지납니다. 하늘에는 철새떼가 날아가고, 턴이 끝나면 다시 역으로 들어옵니다.
@@ -186,7 +204,7 @@ Claude Code 옆에 띄워 두는 **그림 패널**과 입력창 위 **상태 띠
 ### 알아 둘 것
 
 - 움직이는 그림은 화면을 계속 그리므로 패널을 여러 개 동시에 열면 CPU 부담이 합쳐집니다. 쓰는 것만 여세요. 모델 응답 속도와는 무관하고, 화면 그리기와 발열·배터리에만 영향이 있습니다. `jungle-falls`, `snow-cabin`, `campfire`는 그림이 커서 상대적으로 무겁습니다.
-- 이 저장소의 모드 안 글자(상태 줄 등)는 영어입니다. 한글 라벨 버전은 제 개인 설정에 있습니다.
+- 글자(상태 줄, 그림 설명, 열기 답장)는 기본이 영어이고, `language` 옵션을 `ko`로 하면 한글입니다. 그림 속 글자는 `STATION`과 `desk-garden`의 말풍선 정도입니다(말풍선은 옵션을 따릅니다).
 - 라이선스는 [MIT](LICENSE)입니다. 누구나 자유롭게 쓰고, 고치고, 다시 배포해도 됩니다.
 
 모두 [Claude Code](https://claude.com/claude-code)로 만들었습니다.

@@ -24,7 +24,12 @@ const ACCENT: Record<string, string> = {
   cost: '#c2b08a',
 }
 
-const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
+const STRINGS = {
+  en: { labels: { five_hour: '5h', seven_day: '7d' } as Record<string, string>, context: 'Context ', first: ' shown after first reply', tomorrow: 'tomorrow' },
+  ko: { labels: { five_hour: '5시간', seven_day: '7일' } as Record<string, string>, context: '컨텍스트 ', first: ' 첫 응답 후 표시', tomorrow: '내일' },
+}
+
+type Words = (typeof STRINGS)['en']
 
 type Usage = {
   context: { tokens?: number; window: number; percent?: number }
@@ -49,20 +54,23 @@ const kilo = (n: number) =>
 // When a window starts over, in this computer's time: the 5-hour one as a clock time (with "tomorrow" if it
 // falls after midnight), the weekly one as month/day.
 const two = (v: number) => String(v).padStart(2, '0')
-const resetLabel = (kind: string, iso: string | undefined, today: Date = new Date()) => {
+const resetLabel = (kind: string, iso: string | undefined, tomorrow: string, today: Date = new Date()) => {
   const d = iso ? new Date(iso) : undefined
   if (!d || Number.isNaN(d.getTime())) return undefined
   if (kind === 'seven_day') return `${d.getMonth() + 1}/${d.getDate()}`
   const clock = `${two(d.getHours())}:${two(d.getMinutes())}`
   const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000)
 
-  return days <= 0 ? clock : days === 1 ? `tomorrow ${clock}` : `${d.getMonth() + 1}/${d.getDate()} ${clock}`
+  return days <= 0 ? clock : days === 1 ? `${tomorrow} ${clock}` : `${d.getMonth() + 1}/${d.getDate()} ${clock}`
 }
 
 const filledCells = (percent: number, cells = CELLS) =>
   Math.max(0, Math.min(cells, Math.round((percent / 100) * cells)))
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     const usage = await $.session.usage()
     await update($, snapshot, () => toSnapshot(usage))
@@ -104,11 +112,11 @@ export const register: Register = on => {
 
     return (
       <Box backgroundColor={PLATE} paddingX={1}>
-        <Text color={ACCENT.context} bold>{'Context '}</Text>
+        <Text color={ACCENT.context} bold>{T.context}</Text>
         <Text color={color}>{'━'.repeat(filled)}</Text>
         <Text color={TRACK}>{'─'.repeat(CELLS - filled)}</Text>
         {percent === undefined || tokens === undefined ? (
-          <Text color={DIM}>{' shown after first reply'}</Text>
+          <Text color={DIM}>{T.first}</Text>
         ) : (
           <Box>
             <Text color={color} bold>{` ${percent}%`}</Text>
@@ -118,7 +126,7 @@ export const register: Register = on => {
         {slots.map(l => (
           <Box>
             <Text color={TRACK}>{'  │  '}</Text>
-            <Text color={ACCENT[l.kind] ?? LABEL}>{`${LABELS[l.kind] ?? l.kind} `}</Text>
+            <Text color={ACCENT[l.kind] ?? LABEL}>{`${T.labels[l.kind] ?? l.kind} `}</Text>
             {l.percent === undefined ? (
               <Text color={DIM}>{'–'}</Text>
             ) : (
@@ -126,7 +134,7 @@ export const register: Register = on => {
                 <Text color={tone(l.percent, ACCENT[l.kind] ?? LABEL)}>{'━'.repeat(filledCells(l.percent, MINI))}</Text>
                 <Text color={TRACK}>{'─'.repeat(MINI - filledCells(l.percent, MINI))}</Text>
                 <Text color={tone(l.percent, ACCENT[l.kind] ?? LABEL)} bold>{` ${l.percent}%`}</Text>
-                {resetLabel(l.kind, l.resetsAt) !== undefined && <Text color={DIM}>{` ↻${resetLabel(l.kind, l.resetsAt)}`}</Text>}
+                {resetLabel(l.kind, l.resetsAt, T.tomorrow) !== undefined && <Text color={DIM}>{` ↻${resetLabel(l.kind, l.resetsAt, T.tomorrow)}`}</Text>}
               </Box>
             )}
           </Box>

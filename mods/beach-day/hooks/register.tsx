@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Beach } from '../types'
 
 const PANE = 'beach-day'
-const TITLE = 'Beach'
-const ALT = 'A top-down beach. Gentle waves wash the shore, people in sunglasses lie on sunbeds under parasols, and swimmers float on rings out at sea, a pink unicorn among them.'
+const STRINGS = {
+  en: {
+    title: 'Beach',
+    alt: 'A top-down beach. Gentle waves wash the shore, people in sunglasses lie on sunbeds under parasols, and swimmers float on rings out at sea, a pink unicorn among them.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the beach pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '해변',
+    alt: '위에서 내려다본 해변. 잔잔한 파도가 밀려오고, 파라솔 아래 썬베드에 선글라스를 낀 사람들이 누워 있으며, 바다에는 핑크 유니콘 튜브를 비롯한 여러 튜브를 탄 사람들이 떠 있습니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '해변을 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 type Ride = { working: boolean }
@@ -357,7 +375,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Beach, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Beach, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const shore = atom({ plugin: 'beach-day', key: 'shore' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Beach)
 
@@ -365,7 +383,10 @@ const shore = atom({ plugin: 'beach-day', key: 'shore' } as const, { working: fa
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -383,9 +404,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'beach' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the beach pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -420,7 +441,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -439,7 +460,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -452,7 +473,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

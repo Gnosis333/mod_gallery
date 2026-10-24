@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Dive } from '../types'
 
 const PANE = 'deep-sub'
-const TITLE = 'Deep sea'
-const ALT = 'A submersible in the deep sea. Glowing jellyfish, an anglerfish and lanternfish drift by while something vast and unknowable stirs faintly far below.'
+const STRINGS = {
+  en: {
+    title: 'Deep sea',
+    alt: 'A submersible in the deep sea. Glowing jellyfish, an anglerfish and lanternfish drift by while something vast and unknowable stirs faintly far below.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the deep-sea pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '심해',
+    alt: '깊은 바다 속 잠수정. 야광 해파리와 아귀, 샛비늘치 떼가 지나가고, 저 아래 어둠 속에서 알 수 없는 거대한 것이 희미하게 움직입니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '심해를 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 type Sub = { working: boolean }
@@ -331,7 +349,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Dive, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Dive, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const dive = atom({ plugin: 'deep-sub', key: 'dive' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Dive)
 
@@ -339,7 +357,10 @@ const dive = atom({ plugin: 'deep-sub', key: 'dive' } as const, { working: false
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -357,9 +378,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'deep' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the deep-sea pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -394,7 +415,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -413,7 +434,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -426,7 +447,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

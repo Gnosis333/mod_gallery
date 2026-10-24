@@ -4,8 +4,26 @@ import type { ElementTable, Register } from 'claude-code'
 import type { Camp } from '../types'
 
 const PANE = 'campfire'
-const TITLE = 'Campfire'
-const ALT = 'A campfire in a dense forest clearing on a starry night. Flames lick, sparks crackle up, flowers ring the clearing, and now and then a fox trots by or an owl perches and swivels its head.'
+const STRINGS = {
+  en: {
+    title: 'Campfire',
+    alt: 'A campfire in a dense forest clearing on a starry night. Flames lick, sparks crackle up, flowers ring the clearing, and now and then a fox trots by or an owl perches and swivels its head.',
+    working: (clock: string, tools: number) => `Working ${clock} · tools ${tools}`,
+    idle: 'Idle',
+    opened: 'Opened the campfire pane.',
+    note: 'The animation shows in the desktop app.',
+  },
+  ko: {
+    title: '모닥불',
+    alt: '별이 가득한 밤, 빽빽한 숲속 공터의 모닥불. 불꽃이 일렁이고 불티가 탁탁 튀어 오르며, 꽃들이 둘레에 피어 있고, 가끔 여우가 지나가거나 올빼미가 앉아 고개를 돌립니다.',
+    working: (clock: string, tools: number) => `작업 중 ${clock} · 도구 ${tools}회`,
+    idle: '쉬는 중',
+    opened: '모닥불을 열었습니다.',
+    note: '그림 움직임은 데스크톱 앱에서 보입니다.',
+  },
+}
+
+type Words = (typeof STRINGS)['en']
 
 // ---scene-start
 type Fire = { working: boolean; startedAt: number; endedAt: number }
@@ -513,7 +531,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 }
 
-const label = (w: Camp, now: number) => (w.working ? `Working ${clock(now - w.startedAt)} · tools ${w.tools}` : 'Idle')
+const label = (w: Camp, now: number, T: Words) => (w.working ? T.working(clock(now - w.startedAt), w.tools) : T.idle)
 
 const fire = atom({ plugin: 'campfire', key: 'fire' } as const, { working: false, tools: 0, startedAt: 0, endedAt: 0, tick: 0 } as Camp)
 
@@ -521,7 +539,10 @@ const fire = atom({ plugin: 'campfire', key: 'fire' } as const, { working: false
 let t0 = 0
 let cache = { key: '', svg: '' }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  // `language` is a field of the plugin's userConfig: 'en' (default) or 'ko'
+  const T: Words = STRINGS[options.language === 'ko' ? 'ko' : 'en']
+
   on('session.start', async ($, e, next) => {
     t0 = await $.clock.now()
     await $.command.register({
@@ -539,9 +560,9 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'fire' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE })
+    await $.ui.open({ id: PANE, title: T.title })
 
-    return { text: 'Opened the campfire pane.' }
+    return { text: T.opened }
   })
 
   // The main loop's turns only: a subagent's run is not Claude at work.
@@ -576,7 +597,7 @@ export const register: Register = on => {
     if (t0 === 0) t0 = now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 20
-    const line = label(w, now)
+    const line = label(w, now, T)
 
     if (e.surface !== 'terminal') {
       const { Box, Text, Svg } = els as ElementTable<'desktop'>
@@ -598,7 +619,7 @@ export const register: Register = on => {
               {line}
             </Text>
           </Box>
-          <Svg source={cache.svg} alt={ALT} width={width} height={height} isInteractive />
+          <Svg source={cache.svg} alt={T.alt} width={width} height={height} isInteractive />
         </Box>
       )
     }
@@ -611,7 +632,7 @@ export const register: Register = on => {
           <Text color={color}>{row}</Text>
         ))}
         <Text>{line}</Text>
-        <Text dimColor>The animation shows in the desktop app.</Text>
+        <Text dimColor>{T.note}</Text>
       </Box>
     )
   })

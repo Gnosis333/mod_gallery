@@ -64,3 +64,15 @@ test('the terminal gets a still text flowerpot', async ($, on) => {
   expect(await ui.find({ type: 'Svg' })).toBeFalsy()
   await ui.unmount()
 })
+
+test('with language set to ko the labels are Korean', { options: { language: 'ko' } }, async ($, on) => {
+  on('command.register', () => ({ value: { command: 'garden' } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await ui.find({ type: 'Text', text: /꽃 0\/12/ }))?.text).toBe('꽃 0/12 · 완료 0턴 · 도구 0회')
+  expect(JSON.stringify(await ui.findAll({ type: 'Svg' }))).toMatch(/쉬는 중/)
+  await ui.unmount()
+})
