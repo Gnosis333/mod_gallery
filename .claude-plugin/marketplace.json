@@ -68,6 +68,11 @@
       "name": "campfire",
       "source": "./mods/campfire",
       "description": "A tall campfire pane in a deep forest under the stars: flickering flames, crackling sparks, flowers round the clearing, a passing fox and an owl that swivels its head; the fire roars while Claude works and dies back after. Opens with /fire"
+    },
+    {
+      "name": "pachinko",
+      "source": "./mods/pachinko",
+      "description": "A tall plinko/pachinko pane fed by Claude's work: balls fall through a random pin board into coin slots, with reels, chance time, jackpots, a coin goal with a celebration and a ball guide. Korean labels only. Opens with /pachinko"
     }
   ]
 }
