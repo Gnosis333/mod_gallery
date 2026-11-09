@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 import type { Board } from '../types'
-import { BALL_GUIDE, CANNON, EMPTY, GOAL_BASE, PLAIN, RAIN, buildBoard, checkGoal, guideText, resetBoard, comboMult, dropBalls, goalLine, goalStep, launch, makeLayout, reelMs, rollReel, settle, walk, workBalls } from './register'
+import { BALL_GUIDE, CANNON, EMPTY, GOAL_COINS, PLAIN, RAIN, buildBoard, checkGoal, guideText, resetBoard, comboMult, dropBalls, goalLine, launch, makeLayout, reelMs, rollReel, settle, walk, workBalls } from './register'
 import type { Drop } from './register'
 
 const PANE = {
@@ -88,7 +88,7 @@ describe('the board', () => {
         else if (hit === 'end') expect([0, 1]).toContain(step)
         else expect(step).toBe(1)
       })
-      expect(ball.dur >= 3 && ball.dur <= 4).toBe(true)
+      expect(ball.dur >= 4 && ball.dur <= 5).toBe(true)
     }
     expect(starts.size).toBe(14)
     expect(slots.size).toBe(13)
@@ -119,6 +119,29 @@ describe('the board', () => {
     expect(spread).toBe(13)
   })
 
+  test('no gap touches another, so a ball never has a long free drop', () => {
+    const rand = seeded(33)
+    for (let i = 0; i < 300; i++) {
+      const gaps = new Set(makeLayout(i, rand).gaps)
+      for (const id of gaps) {
+        const r = Math.floor(id / 100)
+        const p = id % 100
+        for (const near of [r * 100 + p - 2, r * 100 + p + 2, (r - 1) * 100 + p - 1, (r - 1) * 100 + p + 1, (r + 1) * 100 + p - 1, (r + 1) * 100 + p + 1, (r - 2) * 100 + p, (r + 2) * 100 + p]) {
+          expect(gaps.has(near)).toBe(false)
+        }
+      }
+    }
+    // and a ball, on any such layout, is never in the air for more than two rows in a row
+    const layout = makeLayout(1, seeded(4))
+    const rand2 = seeded(8)
+    let longest = 0
+    for (let i = 0; i < 3000; i++) {
+      const run = walk(layout, 2 * Math.floor(rand2() * 14), 0, rand2).hits.match(/f+/g) ?? []
+      longest = Math.max(longest, ...run.map(x => x.length))
+    }
+    expect(longest).toBeLessThanOrEqual(2)
+  })
+
   test('a layout keeps the top row and the walls whole, and mixes in gaps, bumpers and gold pins', () => {
     const rand = seeded(21)
     let gaps = 0
@@ -135,7 +158,7 @@ describe('the board', () => {
       golds += layout.golds.length
     }
     console.log(`per layout: gaps ${(gaps / 200).toFixed(1)} · bumpers ${(bumpers / 200).toFixed(1)} · gold pins ${(golds / 200).toFixed(1)}`)
-    expect(gaps / 200).toBeGreaterThan(12)
+    expect(gaps / 200).toBeGreaterThan(8)
     expect(bumpers / 200).toBeGreaterThan(3)
     expect(golds / 200).toBeGreaterThan(4)
   })
@@ -431,50 +454,48 @@ describe('the economy', () => {
     const turnsFor = (goal: number) => goal / median
     console.log(
       `coins per turn: median ${Math.round(median)} (slow ${Math.round(perTurn[4]!)}, lucky ${Math.round(perTurn[35]!)}) · ` +
-        `goal Lv1 ${goalStep(1)} ≈ ${turnsFor(goalStep(1)).toFixed(1)} turns · Lv2 ${goalStep(2)} ≈ ${turnsFor(goalStep(2)).toFixed(1)} · Lv5 ${goalStep(5)} ≈ ${turnsFor(goalStep(5)).toFixed(1)}`,
+        `goal ${GOAL_COINS} ≈ ${turnsFor(GOAL_COINS).toFixed(1)} turns`,
     )
-    expect(turnsFor(goalStep(1))).toBeGreaterThan(3)
-    expect(turnsFor(goalStep(1))).toBeLessThan(6)
+    // a goal that takes a good while, but not a whole day of work
+    expect(turnsFor(GOAL_COINS)).toBeGreaterThan(6)
+    expect(turnsFor(GOAL_COINS)).toBeLessThan(15)
     // even a slow stretch gets there within about twice that
-    expect(goalStep(1) / perTurn[4]!).toBeLessThan(8)
+    expect(GOAL_COINS / perTurn[4]!).toBeLessThan(20)
   })
 })
 
 describe('the goal', () => {
-  test('each goal is a quarter bigger than the last, in round numbers', () => {
-    expect(goalStep(1)).toBe(GOAL_BASE)
-    expect(goalStep(2)).toBe(6250)
-    expect(goalStep(3)).toBe(7800)
-    expect(goalStep(5) % 50).toBe(0)
+  test('every goal is the same 10,000 coins', () => {
+    expect(GOAL_COINS).toBe(10_000)
   })
 
-  test('filling a goal moves to the next, carries the surplus, and starts the celebration', () => {
-    const b: Board = { ...EMPTY, goalLevel: 1, goalStart: 500, balance: 500 + 4999 }
+  test('filling a goal starts the next one, carries the surplus, and starts the celebration', () => {
+    const b: Board = { ...EMPTY, goalLevel: 1, goalStart: 500, balance: 500 + 9_999 }
     expect(checkGoal(b, 0)).toBeUndefined()
-    const out = checkGoal({ ...b, balance: 500 + 5100 }, 7000)!
+    const out = checkGoal({ ...b, balance: 500 + 10_100 }, 7000)!
     expect(out.reached).toEqual([1])
     expect(out.board.goalLevel).toBe(2)
-    expect(out.board.goalStart).toBe(5500)
+    expect(out.board.goalStart).toBe(10_500)
     expect(out.board.celebrateAt).toBe(7000)
-    expect(out.board.log[0]).toMatch(/목표 Lv1 달성! 다음 목표 6,250코인/)
+    expect(out.board.log[0]).toMatch(/목표 1번째 달성! 다시 10,000코인/)
     // a jackpot big enough for two goals passes both
-    expect(checkGoal({ ...b, balance: 500 + 5000 + 6250 }, 0)?.reached).toEqual([1, 2])
+    expect(checkGoal({ ...b, balance: 500 + 20_000 }, 0)?.reached).toEqual([1, 2])
     // before the first goal is set there is nothing to reach
     expect(checkGoal({ ...EMPTY, balance: 99_999 }, 0)).toBeUndefined()
   })
 
-  test('the goal line shows the level, a bar and the coins toward it', () => {
-    expect(goalLine({ ...EMPTY, goalLevel: 2, goalStart: 1000, balance: 1000 + 3125 })).toBe('🎯 목표 Lv2 ▰▰▰▰▰▱▱▱▱▱ 3,125 / 6,250')
+  test('the goal line shows a bar and the coins toward it', () => {
+    expect(goalLine({ ...EMPTY, goalLevel: 1, goalStart: 1000, balance: 1000 + 5_000 })).toBe('🎯 목표 ▰▰▰▰▰▱▱▱▱▱ 5,000 / 10,000')
     // spent below the start, it shows nothing yet, not a negative
-    expect(goalLine({ ...EMPTY, goalLevel: 1, goalStart: 1000, balance: 900 })).toBe('🎯 목표 Lv1 ▱▱▱▱▱▱▱▱▱▱ 0 / 5,000')
+    expect(goalLine({ ...EMPTY, goalLevel: 1, goalStart: 1000, balance: 900 })).toBe('🎯 목표 ▱▱▱▱▱▱▱▱▱▱ 0 / 10,000')
   })
 
   test('the celebration fires cannons and rain, bursts, shows the words, ends, and is gone once over', () => {
-    const b: Board = { ...EMPTY, goalLevel: 2, goalStart: 5000, celebrateAt: 10_000 }
+    const b: Board = { ...EMPTY, goalLevel: 2, goalStart: 10_000, celebrateAt: 10_000 }
     const svg = buildBoard(b, 10_000)
     expect(svg).toMatch(/목표 달성!/)
-    expect(svg).toMatch(/Lv1 클리어/)
-    expect(svg).toMatch(/다음 목표 6,250코인/)
+    expect(svg).toMatch(/1번째 클리어/)
+    expect(svg).toMatch(/다시 10,000코인/)
     expect((svg.match(/<g class="cf"/g) ?? []).length).toBe(RAIN + CANNON * 2)
     expect(RAIN + CANNON * 2).toBeGreaterThanOrEqual(150)
     expect((svg.match(/animateMotion path="M\d+ -10/g) ?? []).length).toBe(RAIN)
@@ -498,7 +519,7 @@ describe('the pane', () => {
     expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/animateMotion/)
     expect(await ui.find({ type: 'Text', text: /작업 시작/ })).toBeTruthy()
 
-    await clock.advance(4000)
+    await clock.advance(6000)
     expect((await ui.find({ type: 'Text', text: /코인/ }))?.text).not.toMatch(/^💰 0 코인/)
     await ui.unmount()
   })
@@ -507,13 +528,13 @@ describe('the pane', () => {
     answers(on, { balance: 1000, totalBalls: 0, jackpots: 0, kakuhens: 0, best: 0 })
     await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-    expect((await ui.find({ type: 'Text', text: /목표/ }))?.text).toBe('🎯 목표 Lv1 ▱▱▱▱▱▱▱▱▱▱ 0 / 5,000')
+    expect((await ui.find({ type: 'Text', text: /목표/ }))?.text).toBe('🎯 목표 ▱▱▱▱▱▱▱▱▱▱ 0 / 10,000')
     await ui.unmount()
-    expect((await $.command.run(run('')))?.text).toMatch(/🎯 목표 Lv1/)
+    expect((await $.command.run(run('')))?.text).toMatch(/🎯 목표 ▱/)
   })
 
   test('a goal reached in play celebrates on the board and in a toast', async ($, on) => {
-    const clock = answers(on, { balance: 0, totalBalls: 0, jackpots: 0, kakuhens: 0, best: 0, goalLevel: 1, goalStart: -4999 })
+    const clock = answers(on, { balance: 0, totalBalls: 0, jackpots: 0, kakuhens: 0, best: 0, goalLevel: 1, goalStart: -9_999 })
     const toasts: string[] = []
     on('ui.toast', (_, e) => {
       toasts.push(e.text)
@@ -522,12 +543,13 @@ describe('the pane', () => {
     })
     on('tool.call', () => ({ result: {} }))
     await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-    // 4,999 of 5,000 already: one ball that pays at all (every ball pays at least 1) fills it
+    // 9,999 of 10,000 already: one ball that pays at all (every ball pays at least 1) fills it
     await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'a', new_string: 'b' })
-    await clock.advance(4500)
-    expect(toasts.some(t => /목표 Lv1 달성!/.test(t))).toBe(true)
+    await clock.advance(5600)
+    expect(toasts.some(t => /목표 1번째 달성!/.test(t))).toBe(true)
     const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-    expect((await ui.find({ type: 'Text', text: /목표 Lv/ }))?.text).toMatch(/^🎯 목표 Lv2 /)
+    expect((await ui.find({ type: 'Text', text: /콤보/ }))?.text).toMatch(/콤보 \d+ \(×[\d.]+\) · 목표 1회 달성$/)
+    expect((await ui.find({ type: 'Text', text: /🎯/ }))?.text).toMatch(/^🎯 목표 [▰▱]{10} [\d,]+ \/ 10,000$/)
     expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/목표 달성!/)
     // the celebration ends (4.6 s after the ball landed, up to 4 s in) and the board goes back to play
     await clock.advance(6000)
@@ -559,7 +581,7 @@ describe('the pane', () => {
     const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
     expect(await ui.find({ type: 'Text', text: /데스크톱 앱/ })).toBeTruthy()
     expect(await ui.find({ type: 'Svg' })).toBeFalsy()
-    expect(await ui.find({ type: 'Text', text: /🎯 목표 Lv1/ })).toBeTruthy()
+    expect(await ui.find({ type: 'Text', text: /🎯 목표/ })).toBeTruthy()
     expect(await ui.find({ key: 'reset' })).toBeTruthy()
     expect(await ui.find({ key: 'fire-ten' })).toBeFalsy()
     await ui.unmount()
@@ -667,7 +689,7 @@ describe('resetting the score', () => {
     expect(after.balls).toEqual([])
     expect(after.layout).toBe(layout)
     expect(after.seq).toBe(board.seq)
-    expect(goalLine(after)).toBe('🎯 목표 Lv1 ▱▱▱▱▱▱▱▱▱▱ 0 / 5,000')
+    expect(goalLine(after)).toBe('🎯 목표 ▱▱▱▱▱▱▱▱▱▱ 0 / 10,000')
   })
 
   test('the button resets only on a second press within five seconds, and the bank follows', async ($, on) => {
@@ -689,19 +711,19 @@ describe('resetting the score', () => {
     await clock.advance(1000)
     await ui.press({ key: 'reset' })
     expect(await coinsNow()).toMatch(/^💰 0 코인 · 콤보 0/)
-    expect((await ui.find({ type: 'Text', text: /목표 Lv/ }))?.text).toBe('🎯 목표 Lv1 ▱▱▱▱▱▱▱▱▱▱ 0 / 5,000')
+    expect((await ui.find({ type: 'Text', text: /목표/ }))?.text).toBe('🎯 목표 ▱▱▱▱▱▱▱▱▱▱ 0 / 10,000')
     expect(await ui.find({ type: 'Text', text: /점수 리셋: 0코인/ })).toBeTruthy()
     await ui.unmount()
 
     // a reload of the module reads the bank: the reset holds
     await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
-    expect((await $.command.run(run('')))?.text).toMatch(/파칭코: 0 코인 · 공 0개 · 잭팟 0번 · 찬스 0번 · 최고 한 방 0\n🎯 목표 Lv1 /)
+    expect((await $.command.run(run('')))?.text).toMatch(/파칭코: 0 코인 · 공 0개 · 잭팟 0번 · 찬스 0번 · 최고 한 방 0\n🎯 목표 /)
   })
 
   test('/pachinko reset resets at once and says from what', async ($, on) => {
     answers(on, { balance: 3100, totalBalls: 10, jackpots: 0, kakuhens: 0, best: 90, goalLevel: 2, goalStart: 0 })
     await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
-    expect((await $.command.run(run('reset')))?.text).toBe('점수를 리셋했습니다 (3,100코인 → 0, 목표 Lv2 → Lv1)')
+    expect((await $.command.run(run('reset')))?.text).toBe('점수를 리셋했습니다 (3,100코인 → 0)')
     expect((await $.command.run(run('')))?.text).toMatch(/^파칭코: 0 코인/)
   })
 })

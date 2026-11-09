@@ -1,6 +1,6 @@
 {
   "name": "pachinko",
-  "version": "0.3.0",
+  "version": "0.3.5",
   "description": "A tall plinko/pachinko pane: Claude's work drops balls through a random pin board into slots that pay coins. Reels, chance time, jackpots, a coin goal with a celebration, and a ball guide. Korean labels only for now.",
   "author": {
     "name": "Gnosis333"

@@ -1,6 +1,6 @@
 # pachinko
 
-A tall plinko/pachinko pane that Claude's work feeds. Every turn start and tool call drops a ball through a randomly laid-out pin board (strong bounces, bumpers, gold pins, gaps) into one of 13 slots that pay coins. The center slot spins three reels; matching digits give bonus balls, 7-7-7 starts chance time. Commits, passing tests and a failed-then-fixed test drop special balls, errors drop a dud, and a rare gold ball is a jackpot. A coin goal grows each level and a confetti celebration plays when you reach it. The 📖 button (or `/pachinko balls`) explains every ball.
+A tall plinko/pachinko pane that Claude's work feeds. Every turn start and tool call drops a ball through a randomly laid-out pin board (strong bounces, bumpers, gold pins, gaps) into one of 13 slots that pay coins. The center slot spins three reels; matching digits give bonus balls, 7-7-7 starts chance time. Commits, passing tests and a failed-then-fixed test drop special balls, errors drop a dud, and a rare gold ball is a jackpot. A fixed 10,000-coin goal plays a confetti celebration each time you reach it. The 📖 button (or `/pachinko balls`) explains every ball.
 
 **Labels are Korean only for now** (no `language` option yet).
 

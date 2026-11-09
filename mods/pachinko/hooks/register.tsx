@@ -23,7 +23,7 @@ const SLOT_TOP = LAST + 22
 const REST = SLOT_TOP + 52
 const MULT = [1.5, 0.2, 0.8, 0.2, 1, 0.3, 8, 0.3, 1, 0.2, 0.8, 0.2, 1.5]
 const CENTER = 6 // the slot that spins the reels
-const FALL = 3 // the quickest a ball takes from the top to its slot, in seconds; each takes up to a second more
+const FALL = 4 // the quickest a ball takes from the top to its slot, in seconds; each takes up to a second more
 const GAP = 180 // ms between balls dropped together
 const MAX_FLYING = 40
 const MAX_REELS = 4 // spins waiting their turn
@@ -35,15 +35,14 @@ const GOLD_PAY = 0.5 // each gold pin hit adds half the ball's value, before the
 const CENTER_MULT = 8
 const FEVER_MS = 30_000
 const JACKPOT_CHANCE = 0.005
-// The first goal is about twenty minutes of ordinary work, four or five turns (see the economy test); each one
-// after is a quarter more.
-export const GOAL_BASE = 5000
-const GOAL_GROWTH = 1.25
+// One goal, the same every time: about nine ordinary turns of work (see the economy test). `goalLevel`
+// counts the goals filled so far, plus one.
+export const GOAL_COINS = 10_000
 const CELEBRATE_MS = 4600
 const RESET_WINDOW = 5000
 const BUMP = 5 // lanes a bumper throws the ball
-const STRONG = 0.25 // the chance a plain or gold pin kicks the ball three lanes instead of one
-const MOMENTUM = 0.15 // how much a ball leans the way it last went
+const STRONG = 0.4 // the chance a plain or gold pin kicks the ball three lanes instead of one
+const MOMENTUM = 0.2 // how much a ball leans the way it last went
 
 const laneX = (p: number) => LEFT + (p * DX) / 2
 const slotX = (k: number) => laneX(2 * k + 1)
@@ -60,12 +59,21 @@ export const makeLayout = (id: number, rand: () => number): Layout => {
   const gaps: number[] = []
   const bumpers: number[] = []
   const golds: number[] = []
+  // A gap never touches another: not beside it, not in the row above or below, not two rows up in the same
+  // lane, so a ball falls through at most one gap at a time and never in a long free drop.
+  const isGap = new Set<number>()
+  const touchesGap = (r: number, p: number) =>
+    [pinId(r, p - 2), pinId(r - 1, p - 1), pinId(r - 1, p + 1), pinId(r - 2, p)].some(id => isGap.has(id))
   for (let r = 1; r < ROWS; r++) {
     for (let p = r % 2; p <= LANES; p += 2) {
       if (isWall(p)) continue
       const roll = rand()
-      if (roll < 0.12) gaps.push(pinId(r, p))
-      else if (roll < 0.155) bumpers.push(pinId(r, p))
+      if (roll < 0.12) {
+        // a roll for a gap that would touch another leaves a pin
+        if (touchesGap(r, p)) continue
+        isGap.add(pinId(r, p))
+        gaps.push(pinId(r, p))
+      } else if (roll < 0.155) bumpers.push(pinId(r, p))
       else if (roll < 0.195) golds.push(pinId(r, p))
     }
   }
@@ -133,7 +141,7 @@ const DEFS =
 
 // The ball's way down along its lanes: a hop over each pin it meets, higher off a bumper, a straight drop
 // through a gap, and a last hop off a divider when it comes down on one.
-const pathOf = (ball: Ball, jitter: number) => {
+export const pathOf = (ball: Ball, jitter: number) => {
   const lanes = ball.lanes
   let x = laneX(lanes[0] ?? ball.start)
   let d = `M${r1(x + jitter)} 10 L${r1(x)} ${Y0 - 9}`
@@ -142,10 +150,15 @@ const pathOf = (ball: Ball, jitter: number) => {
     const y = Y0 + r * DY - 9
     const ny = r === ROWS ? REST : r === ROWS - 1 ? SLOT_TOP - 9 : y + DY
     // each hop its own height, from the ball and the row
-    const lift = 8 + ((ball.id * 13 + r * 7) % 11)
+    const lift = 12 + ((ball.id * 13 + r * 7) % 13)
     const hit = ball.hits[r] ?? ''
     if (nx === x) d += ` L${r1(x)} ${ny}`
-    else if (hit === 'k') d += ` Q${r1(x + (nx - x) * 0.5)} ${y - 44 - (lift % 8)} ${r1(nx)} ${ny}`
+    else if (Math.abs(nx - x) > DX) {
+      // a kick of three lanes or more travels along the gap between two rows of pins, so it never runs through
+      // one, and drops onto the pin it meets at the far end
+      const dx = nx - x
+      d += ` C${r1(x + dx * 0.1)} ${y - 17} ${r1(nx - dx * 0.25)} ${y - 17} ${r1(nx)} ${y - 12} L${r1(nx)} ${ny}`
+    } else if (hit === 'k') d += ` Q${r1(x + (nx - x) * 0.5)} ${y - 44 - (lift % 8)} ${r1(nx)} ${ny}`
     else if (hit === 'B' || hit === 'G') d += ` Q${r1(x + (nx - x) * 0.5)} ${y - 24 - (lift % 6)} ${r1(nx)} ${ny}`
     else d += ` Q${r1(x + (nx - x) * 0.55)} ${y - lift} ${r1(nx)} ${ny}`
     x = nx
@@ -281,23 +294,21 @@ const reelSvg = (reel: Reel, begin: number) => {
 }
 
 // ---- the goal ------------------------------------------------------------------------
-// Coins to earn for each level's goal, rounded to fifty.
-export const goalStep = (level: number) => Math.round((GOAL_BASE * GOAL_GROWTH ** Math.max(0, level - 1)) / 50) * 50
 
 // Moves past every goal the balance has filled, carrying the surplus into the next. Undefined when none was.
 export const checkGoal = (b: Board, now: number) => {
   let level = b.goalLevel
   let start = b.goalStart
   const reached: number[] = []
-  while (level > 0 && b.balance - start >= goalStep(level)) {
-    start += goalStep(level)
+  while (level > 0 && b.balance - start >= GOAL_COINS) {
+    start += GOAL_COINS
     reached.push(level)
     level += 1
   }
   if (reached.length === 0) return undefined
 
   return {
-    board: { ...b, goalLevel: level, goalStart: start, celebrateAt: now, log: pushLog(b.log, `🎉 목표 Lv${reached[reached.length - 1]} 달성! 다음 목표 ${coins(goalStep(level))}코인`) },
+    board: { ...b, goalLevel: level, goalStart: start, celebrateAt: now, log: pushLog(b.log, `🎉 목표 ${reached[reached.length - 1]}번째 달성! 다시 ${coins(GOAL_COINS)}코인`) },
     reached,
   }
 }
@@ -383,8 +394,8 @@ const celebrationSvg = (b: Board, begin: number) => {
     `<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;.06;.85;1" begin="${t}s" dur="${total}s" fill="freeze"/>` +
     `<g><animateTransform attributeName="transform" type="scale" values=".3;1.22;.94;1.04;1" keyTimes="0;.08;.13;.17;.21" begin="${t}s" dur="${total}s" fill="freeze"/>` +
     `<text y="-4" text-anchor="middle" font-size="38" font-weight="900" ${FONT} fill="#f2c14e" stroke="#7a5a12" stroke-width="1.2" paint-order="stroke">목표 달성!</text>` +
-    `<text y="28" text-anchor="middle" font-size="16" font-weight="800" ${FONT} fill="#f1f3f4">Lv${reached} 클리어</text>` +
-    `<text y="52" text-anchor="middle" font-size="12" font-weight="700" ${FONT} fill="#aeb4bb">다음 목표 ${coins(goalStep(b.goalLevel))}코인</text>` +
+    `<text y="28" text-anchor="middle" font-size="16" font-weight="800" ${FONT} fill="#f1f3f4">${reached}번째 클리어</text>` +
+    `<text y="52" text-anchor="middle" font-size="12" font-weight="700" ${FONT} fill="#aeb4bb">다시 ${coins(GOAL_COINS)}코인</text>` +
     '</g></g>'
 
   return g
@@ -821,7 +832,7 @@ async function reachGoals($: EngineInterface) {
   if (reached.length === 0) return
   await save($)
   const b = await read($, board)
-  $.ui.toast(`🎉 목표 Lv${reached[reached.length - 1]} 달성! 다음 목표 ${coins(goalStep(b.goalLevel))}코인`)
+  $.ui.toast(`🎉 목표 ${reached[reached.length - 1]}번째 달성! 다시 ${coins(GOAL_COINS)}코인`)
 }
 
 async function tick($: EngineInterface) {
@@ -872,7 +883,7 @@ export const resetBoard = (b: Board): Board => ({
   layout: b.layout,
   goalLevel: 1,
   goalStart: 0,
-  log: ['↺ 점수 리셋: 0코인, 목표 Lv1부터'],
+  log: ['↺ 점수 리셋: 0코인부터 다시'],
 })
 
 // A press arms the reset; a second press within RESET_WINDOW does it. Says whether it reset.
@@ -891,13 +902,12 @@ async function pressReset($: EngineInterface) {
   return true
 }
 
-// '🎯 목표 Lv2 ▰▰▰▰▱▱▱▱▱▱ 1,240 / 3,750'
+// '🎯 목표 ▰▰▰▰▱▱▱▱▱▱ 4,400 / 10,000'
 export const goalLine = (b: Board) => {
-  const step = goalStep(Math.max(1, b.goalLevel))
-  const got = Math.min(step, Math.max(0, b.balance - b.goalStart))
-  const filled = Math.round((got / step) * 10)
+  const got = Math.min(GOAL_COINS, Math.max(0, b.balance - b.goalStart))
+  const filled = Math.round((got / GOAL_COINS) * 10)
 
-  return `🎯 목표 Lv${Math.max(1, b.goalLevel)} ${'▰'.repeat(filled)}${'▱'.repeat(10 - filled)} ${coins(got)} / ${coins(step)}`
+  return `🎯 목표 ${'▰'.repeat(filled)}${'▱'.repeat(10 - filled)} ${coins(got)} / ${coins(GOAL_COINS)}`
 }
 
 export const register: Register = on => {
@@ -937,7 +947,7 @@ export const register: Register = on => {
       await update($, board, cur => resetBoard(cur))
       await save($)
 
-      return { text: `점수를 리셋했습니다 (${coins(b.balance)}코인 → 0, 목표 Lv${b.goalLevel} → Lv1)` }
+      return { text: `점수를 리셋했습니다 (${coins(b.balance)}코인 → 0)` }
     }
     if (verb === 'drop' || verb === '발사') {
       const words = [what, ...rest].filter((w): w is string => !!w)
@@ -1021,7 +1031,9 @@ export const register: Register = on => {
     const isFever = b.feverUntil > now
     const cols = e.props?.bodyColumns ?? 40
     const rows = e.props?.scroll?.bodyRows ?? 24
-    const top = `💰 ${coins(b.balance)} 코인 · 콤보 ${b.combo} (×${comboMult(b.combo)})`
+    // the goals filled so far sit beside the combo
+    const clears = Math.max(0, b.goalLevel - 1)
+    const top = `💰 ${coins(b.balance)} 코인 · 콤보 ${b.combo} (×${comboMult(b.combo)})${clears > 0 ? ` · 목표 ${clears}회 달성` : ''}`
     const status =
       b.kakuhen > 0
         ? `🌈 찬스 타임 ${b.kakuhen}구 남음 (×${KAKUHEN_MULT})${isFever ? ` · 🔥 피버 ${Math.ceil((b.feverUntil - now) / 1000)}초` : ''}`
