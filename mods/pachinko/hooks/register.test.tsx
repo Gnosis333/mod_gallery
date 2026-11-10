@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 import type { Board } from '../types'
-import { BALL_GUIDE, CANNON, EMPTY, GOAL_COINS, PLAIN, RAIN, buildBoard, checkGoal, guideText, resetBoard, comboMult, dropBalls, goalLine, launch, makeLayout, reelMs, rollReel, settle, walk, workBalls } from './register'
+import { BALL_GUIDE, CANNON, EMPTY, GOAL_COINS, HOPE_COLORS, PLAIN, RAIN, buildBoard, checkGoal, dataLine, guideText, holdLine, idleDrop, motionOf, pathOf, nearGoal, pendingStreak, springOf, resetBoard, comboMult, dropBalls, goalLine, launch, makeLayout, reelMs, rollReel, settle, walk, workBalls } from './register'
 import type { Drop } from './register'
 
 const PANE = {
@@ -83,8 +83,8 @@ describe('the board', () => {
         const hit = ball.hits[r] ?? 'end'
         met.add(hit)
         if (hit === 'f') expect(step).toBe(0)
-        else if (hit === 'k') expect([1, 3, 5]).toContain(step)
-        else if (hit === 'B' || hit === 'G') expect(step).toBe(3)
+        else if (hit === 'k') expect([1, 3, 5, 7]).toContain(step)
+        else if (hit === 'B' || hit === 'G') expect([1, 3, 5, 7]).toContain(step)
         else if (hit === 'end') expect([0, 1]).toContain(step)
         else expect(step).toBe(1)
       })
@@ -163,7 +163,7 @@ describe('the board', () => {
     expect(golds / 200).toBeGreaterThan(4)
   })
 
-  test('a gap drops the ball two rows, a bumper throws it five lanes, a gold pin pays on the way', () => {
+  test('a gap drops the ball two rows, a bumper throws it three to seven lanes, a gold pin pays on the way', () => {
     // from lane 12 at row 0, always bouncing right (0.1) and never strong (0.9)
     const right = alternate(0.1, 0.9)
     expect(walk(PLAIN, 12, 0, right).lanes.slice(0, 4)).toEqual([12, 13, 14, 15])
@@ -171,10 +171,12 @@ describe('the board', () => {
     const gap = walk({ ...PLAIN, gaps: [113] }, 12, 0, alternate(0.1, 0.9))
     expect(gap.hits.slice(0, 4)).toBe('bffb')
     expect(gap.lanes.slice(0, 5)).toEqual([12, 13, 13, 13, 14])
-    // a bumper at row 1 lane 13 throws to lane 18
-    const bump = walk({ ...PLAIN, bumpers: [113] }, 12, 0, alternate(0.1, 0.9))
-    expect(bump.hits[1]).toBe('k')
-    expect(bump.lanes[2]).toBe(18)
+    // a bumper at row 1 lane 13 throws three, five or seven lanes, by its roll: 0.1, 0.5, 0.9
+    for (const [roll, to] of [[0.1, 16], [0.5, 18], [0.9, 20]] as const) {
+      const bump = walk({ ...PLAIN, bumpers: [113] }, 12, 0, script(0.1, 0.9, 0.1, roll))
+      expect(bump.hits[1]).toBe('k')
+      expect(bump.lanes[2]).toBe(to)
+    }
     // near a wall it throws as far as the board allows
     expect(walk({ ...PLAIN, bumpers: [123] }, 22, 0, alternate(0.1, 0.9)).lanes[2]).toBe(26)
     expect(walk({ ...PLAIN, bumpers: [125] }, 24, 0, alternate(0.1, 0.9)).lanes[2]).toBe(26)
@@ -289,7 +291,7 @@ describe('the reels', () => {
   })
 
   test('the board draws the reel overlay with a reach and its result', () => {
-    const b: Board = { ...EMPTY, reels: [{ id: 1, at: 0, digits: [3, 3, 5], outcome: 'miss', isFree: false, isDone: false }] }
+    const b: Board = { ...EMPTY, reels: [{ id: 1, at: 0, digits: [3, 3, 5], outcome: 'miss', hope: 0, isCeiling: false, isFree: false, isDone: false }] }
     const svg = buildBoard(b, 0)
     expect(svg).toMatch(/SPIN/)
     expect(svg).toMatch(/리치!/)
@@ -299,7 +301,7 @@ describe('the reels', () => {
 
   test('a board rebuilt after the reels stopped draws them stopped, not spinning from the start', () => {
     // an animation over before the SVG loads never runs, so its freeze never holds
-    const b: Board = { ...EMPTY, reels: [{ id: 1, at: 0, digits: [7, 7, 7], outcome: 'kakuhen', isFree: false, isDone: true }] }
+    const b: Board = { ...EMPTY, reels: [{ id: 1, at: 0, digits: [7, 7, 7], outcome: 'kakuhen', hope: 0, isCeiling: false, isFree: false, isDone: true }] }
     const after = buildBoard(b, 3300)
     expect(after).not.toMatch(/calcMode="spline"/)
     expect((after.match(/<g transform="translate\(0 -\d+\)">/g) ?? []).length).toBe(3)
@@ -321,7 +323,7 @@ describe('the reels', () => {
     const plain = buildBoard(EMPTY, 0)
     const layout = { id: 77, gaps: [113, 115], bumpers: [216], golds: [319] }
     const drawn = buildBoard({ ...EMPTY, layout }, 0)
-    const pins = (svg: string) => (svg.match(/r="3" fill="#6a7078"/g) ?? []).length
+    const pins = (svg: string) => (svg.match(/r="[\d.]+" fill="url\(#pin\)"/g) ?? []).length
     expect(pins(plain) - pins(drawn)).toBe(4)
     expect(drawn).toMatch(/r="4\.2" fill="#8a4a6a"/)
     expect(drawn).toMatch(/r="3\.8" fill="#c9a24a"/)
@@ -595,7 +597,7 @@ describe('easy on the eyes', () => {
       layout: { id: 5, gaps: [113], bumpers: [216], golds: [319] },
       kakuhen: 5,
       feverUntil: 10_000,
-      reels: [{ id: 1, at: 0, digits: [7, 7, 7], outcome: 'kakuhen', isFree: false, isDone: false }],
+      reels: [{ id: 1, at: 0, digits: [7, 7, 7], outcome: 'kakuhen', hope: 0, isCeiling: false, isFree: false, isDone: false }],
     }
     const { board } = dropBalls(busy, [{ ...WHITE }], 0, () => 0.99)
     const svg = buildBoard({ ...board, balls: board.balls.map(one => ({ ...one, kind: 'jackpot' as const })) }, 0)
@@ -800,6 +802,332 @@ describe('the ball guide', () => {
     await ui.press({ key: 'guide' })
     expect(await ui.find({ type: 'Text', text: /🔵 읽기 공/ })).toBeTruthy()
     expect(await ui.find({ type: 'Text', text: /떨어지는 공|대기 중/ })).toBeFalsy()
+    await ui.unmount()
+  })
+})
+
+const reelOf = (over: Partial<Board['reels'][number]>): Board['reels'][number] => ({
+  id: 1, at: 1_000_000, digits: [3, 3, 5], outcome: 'miss', hope: 0, isCeiling: false, isFree: false, isDone: false, ...over,
+})
+
+describe('omens and hold lamps', () => {
+  test('a higher omen wins more often, none is a sure thing, and every tier shows up', () => {
+    const rand = seeded(17)
+    const seen = Array.from({ length: 5 }, () => ({ n: 0, won: 0 }))
+    for (let i = 0; i < 120_000; i++) {
+      const { outcome, hope } = rollReel(rand)
+      expect(hope).toBeGreaterThanOrEqual(0)
+      expect(hope).toBeLessThanOrEqual(4)
+      if (outcome === 'kakuhen') expect(hope).toBeGreaterThan(0)
+      seen[hope]!.n += 1
+      if (outcome !== 'miss') seen[hope]!.won += 1
+    }
+    const rates = seen.map(t => t.won / t.n)
+    console.log(`win rate by omen: ${rates.map(r => (r * 100).toFixed(0) + '%').join(' < ')} · shares ${seen.map(t => ((t.n / 120_000) * 100).toFixed(0) + '%').join(' / ')}`)
+    for (let t = 1; t < 5; t++) expect(rates[t]!).toBeGreaterThan(rates[t - 1]!)
+    expect(rates[0]!).toBeLessThan(0.08)
+    expect(rates[4]!).toBeGreaterThan(0.5)
+    expect(rates[4]!).toBeLessThan(0.9)
+    expect(seen.every(t => t.n > 0)).toBe(true)
+  })
+
+  test('a waiting spin lights a lamp in its omen color, and the lamp goes out when the spin starts', () => {
+    const b: Board = { ...EMPTY, reels: [reelOf({ id: 1, at: 1_005_000, hope: 1 }), reelOf({ id: 2, at: 1_009_000, hope: 3 })] }
+    const svg = buildBoard(b, 1_000_000)
+    expect(svg).toContain(`r="5.6" fill="${HOPE_COLORS[1]}"><set attributeName="opacity" to="0" begin="5s"/>`)
+    expect(svg).toContain(`r="5.6" fill="${HOPE_COLORS[3]}"><set attributeName="opacity" to="0" begin="9s"/>`)
+    expect((svg.match(/r="5\.6"/g) ?? []).length).toBe(2)
+    // a spin already under way, or a free one, has no lamp
+    const going: Board = { ...EMPTY, reels: [reelOf({ at: 990_000, hope: 2 }), reelOf({ id: 2, at: 1_005_000, isFree: true })] }
+    expect(buildBoard(going, 1_000_000)).not.toMatch(/r="5\.6"/)
+    expect(holdLine(b, 1_000_000)).toBe('보류 🔵🔴')
+    expect(holdLine(going, 1_000_000)).toBe('')
+  })
+
+  test('the omens show on the reel: its frame color, its words and a special reach', () => {
+    const plain = buildBoard({ ...EMPTY, reels: [reelOf({ hope: 0 })] }, 1_000_000)
+    expect(plain).toMatch(/>리치!</)
+    expect(plain).not.toMatch(/스페셜 리치/)
+    const green = buildBoard({ ...EMPTY, reels: [reelOf({ hope: 2 })] }, 1_000_000)
+    expect(green).toContain(`stroke="${HOPE_COLORS[2]}"`)
+    expect(green).toMatch(/초록 예고/)
+    const hot = buildBoard({ ...EMPTY, reels: [reelOf({ hope: 3 })] }, 1_000_000)
+    expect(hot).toMatch(/스페셜 리치!!/)
+    expect(buildBoard({ ...EMPTY, reels: [reelOf({ digits: [7, 7, 7], outcome: 'kakuhen', hope: 4, isCeiling: true })] }, 1_000_000)).toMatch(/천장 보너스!/)
+  })
+})
+
+describe('the ceiling and the data counter', () => {
+  const center = () => dropBalls(EMPTY, [WHITE], 0, () => 0.99).board
+
+  test('twelve misses in a row make the next spin a sure 7-7-7', () => {
+    const start = center()
+    const land = landsAt(start.balls[0]!)
+    // eleven misses so far: the next is still a roll (0.99 is a miss)
+    const before = settle({ ...start, hamari: 11 }, land, () => 0.99)!.board.reels[0]!
+    expect(before.outcome).toBe('miss')
+    expect(before.isCeiling).toBe(false)
+    // twelve: the same roll comes out 7-7-7
+    const sure = settle({ ...start, hamari: 12 }, land, () => 0.99)!.board.reels[0]!
+    expect(sure.digits).toEqual([7, 7, 7])
+    expect(sure.outcome).toBe('kakuhen')
+    expect(sure.isCeiling).toBe(true)
+    expect(sure.hope).toBe(4)
+    // spins still waiting count: ten misses and two missing spins in line
+    const line = { ...start, hamari: 10, reels: [reelOf({ id: 8 }), reelOf({ id: 9 })] }
+    expect(pendingStreak(10, line.reels)).toBe(12)
+    expect(settle(line, land, () => 0.99)!.board.reels[2]!.isCeiling).toBe(true)
+    // a win waiting in line starts the count over
+    expect(pendingStreak(10, [reelOf({ outcome: 'bonus' }), reelOf({ id: 2 })])).toBe(1)
+    // a free ball never gets the ceiling
+    const free = dropBalls(EMPTY, [{ ...WHITE, isFree: true }], 0, () => 0.99).board
+    expect(settle({ ...free, hamari: 40 }, landsAt(free.balls[0]!), () => 0.99)!.board.reels[0]!.isCeiling).toBe(false)
+  })
+
+  test('the counter moves when a reel stops, not before, and a win or the ceiling clears the misses', () => {
+    const start = center()
+    const land = landsAt(start.balls[0]!)
+    const queued = settle({ ...start, spins: 5, hits: 1, hamari: 3 }, land, () => 0.99)!.board
+    // the spin is rolled, but the counter does not give it away
+    expect([queued.spins, queued.hits, queued.hamari]).toEqual([5, 1, 3])
+    const missed = settle(queued, land + 2000)!.board
+    expect([missed.spins, missed.hits, missed.hamari]).toEqual([6, 1, 4])
+    // a win (0.01 is 7-7-7) clears the misses
+    const won = settle(settle({ ...start, spins: 5, hits: 1, hamari: 3 }, land, () => 0.01)!.board, land + 3200)!.board
+    expect([won.spins, won.hits, won.hamari]).toEqual([6, 2, 0])
+    // the ceiling spin says so in the log
+    const sure = settle(settle({ ...start, hamari: 12 }, land, () => 0.99)!.board, land + 3200)!.board
+    expect(sure.log[0]).toMatch(/천장/)
+    expect(sure.kakuhen).toBe(15)
+    expect(sure.hamari).toBe(0)
+    // a free spin changes none of it
+    const free = dropBalls(EMPTY, [{ ...WHITE, isFree: true }], 0, () => 0.99).board
+    const spun = settle(settle({ ...free, spins: 5, hits: 1, hamari: 3 }, landsAt(free.balls[0]!), () => 0.99)!.board, landsAt(free.balls[0]!) + 3200)!.board
+    expect([spun.spins, spun.hits, spun.hamari]).toEqual([5, 1, 3])
+  })
+
+  test('the data line shows the counts and the misses out of the ceiling, and is no longer than the goal line', () => {
+    expect(dataLine({ ...EMPTY, spins: 42, hits: 7, hamari: 4 })).toBe('📊 회전 42 · 당첨 7 · 하마리 4/12')
+    // no wider than the goal line, which fits, so it does not wrap
+    expect([...dataLine({ ...EMPTY, spins: 1234, hits: 99, hamari: 12 })].length).toBeLessThanOrEqual([...goalLine({ ...EMPTY, goalLevel: 1, balance: 10_000 })].length)
+    expect(dataLine(EMPTY)).toBe('📊 회전 0 · 당첨 0 · 하마리 0/12')
+  })
+
+  test('the counts come back from the bank in a new session, and a reset clears them', async ($, on) => {
+    answers(on, { balance: 0, totalBalls: 0, jackpots: 0, kakuhens: 0, best: 0, goalLevel: 1, goalStart: 0, spins: 40, hits: 6, hamari: 3 })
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    expect((await ui.find({ type: 'Text', text: /📊/ }))?.text).toBe('📊 회전 40 · 당첨 6 · 하마리 3/12')
+    expect((await $.command.run(run('')))?.text).toMatch(/📊 회전 40/)
+    await ui.unmount()
+    expect(dataLine(resetBoard({ ...EMPTY, spins: 40, hits: 6, hamari: 3 }))).toBe('📊 회전 0 · 당첨 0 · 하마리 0/12')
+  })
+
+  test('each pane shows the data line once, and the terminal also lists the waiting spins', async ($, on) => {
+    answers(on)
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    const desk = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    expect((await desk.findAll({ type: 'Text', text: /📊/ })).length).toBe(1)
+    expect((await desk.findAll({ type: 'Text', text: /🎯/ })).length).toBe(1)
+    await desk.unmount()
+    const term = await $.ui.mount({ ...PANE, surface: 'terminal' })
+    expect((await term.findAll({ type: 'Text', text: /📊/ })).length).toBe(1)
+    expect((await term.findAll({ type: 'Text', text: /🎯/ })).length).toBe(1)
+    await term.unmount()
+  })
+
+  test('the guide explains the lamps and the ceiling', () => {
+    expect(guideText()).toMatch(/보류 램프/)
+    expect(guideText()).toMatch(/천장: 릴이 12번 연속 꽝/)
+  })
+})
+
+describe('every pin has its own spring', () => {
+  test('a pin keeps its spring for the whole board, and the three kinds are about a third, two fifths and a third', () => {
+    const springs = new Map<number, number>()
+    const count: Record<string, number> = { '0.6': 0, '1': 0, '1.5': 0 }
+    for (let id = 0; id < 40; id++) {
+      for (let r = 0; r < 13; r++) {
+        for (let p = r % 2; p <= 26; p += 2) {
+          const k = springOf(id, r, p)
+          expect(springOf(id, r, p)).toBe(k)
+          expect([0.6, 1, 1.5]).toContain(k)
+          count[String(k)]! += 1
+          springs.set(id * 10000 + r * 100 + p, k)
+        }
+      }
+    }
+    const all = springs.size
+    expect(count['0.6']! / all).toBeGreaterThan(0.25)
+    expect(count['0.6']! / all).toBeLessThan(0.35)
+    expect(count['1']! / all).toBeGreaterThan(0.35)
+    expect(count['1']! / all).toBeLessThan(0.45)
+    expect(count['1.5']! / all).toBeGreaterThan(0.25)
+    expect(count['1.5']! / all).toBeLessThan(0.35)
+    // the same pins are not the same on every board
+    expect([0, 1, 2, 3, 4, 5].map(id => springOf(id, 5, 9)).some(k => k !== springOf(0, 5, 9))).toBe(true)
+  })
+
+  test('bounces come in many strengths, and a lively pin kicks harder and more often than a soft one', () => {
+    const rand = seeded(41)
+    const steps: Record<number, number> = { 1: 0, 3: 0, 5: 0, 7: 0 }
+    const byTier: Record<string, { n: number; strong: number; lanes: number }> = { '0.6': { n: 0, strong: 0, lanes: 0 }, '1': { n: 0, strong: 0, lanes: 0 }, '1.5': { n: 0, strong: 0, lanes: 0 } }
+    for (let i = 0; i < 3000; i++) {
+      const layout = makeLayout(i % 50, rand)
+      const { lanes, hits } = walk(layout, 12, 0, rand)
+      for (let r = 0; r < 13; r++) {
+        const hit = hits[r]
+        if (hit !== 'b' && hit !== 'B' && hit !== 'g' && hit !== 'G') continue
+        const step = Math.abs(lanes[r + 1]! - lanes[r]!)
+        steps[step] = (steps[step] ?? 0) + 1
+        const tier = byTier[String(springOf(layout.id, r, lanes[r]!))]!
+        tier.n += 1
+        if (step > 1) {
+          tier.strong += 1
+          tier.lanes += step
+        }
+      }
+    }
+    const rate = (k: string) => byTier[k]!.strong / byTier[k]!.n
+    const mean = (k: string) => byTier[k]!.lanes / byTier[k]!.strong
+    console.log(`bounce strengths ${JSON.stringify(steps)} · strong share soft ${(rate('0.6') * 100).toFixed(0)}% / ordinary ${(rate('1') * 100).toFixed(0)}% / lively ${(rate('1.5') * 100).toFixed(0)}% · mean kick ${mean('0.6').toFixed(1)} / ${mean('1').toFixed(1)} / ${mean('1.5').toFixed(1)} lanes`)
+    expect(steps[3]! > 0 && steps[5]! > 0 && steps[7]! > 0).toBe(true)
+    expect(steps[5]! / (steps[3]! + steps[5]! + steps[7]!)).toBeGreaterThan(0.15)
+    expect(rate('1.5')).toBeGreaterThan(rate('1'))
+    expect(rate('1')).toBeGreaterThan(rate('0.6'))
+    expect(mean('1.5')).toBeGreaterThan(mean('1'))
+    expect(mean('1')).toBeGreaterThan(mean('0.6'))
+  })
+
+  test('the board draws lively pins bigger and soft ones smaller', () => {
+    const svg = buildBoard({ ...EMPTY, layout: makeLayout(3, seeded(3)) }, 0)
+    for (const r of ['2.5', '3', '3.6']) expect(svg).toContain(`r="${r}" fill="url(#pin)"`)
+  })
+})
+
+describe('trying the celebration', () => {
+  test('goal fills the coins to 20 short, never takes coins away, and one more ball finishes it', () => {
+    const b = nearGoal({ ...EMPTY, goalLevel: 1, goalStart: 1910 - 0, balance: 1910 })
+    expect(b.balance).toBe(1910 + GOAL_COINS - 20)
+    expect(goalLine(b)).toBe('🎯 목표 ▰▰▰▰▰▰▰▰▰▰ 9,980 / 10,000')
+    expect(b.log[0]).toMatch(/확인용/)
+    expect(checkGoal(b, 0)).toBeUndefined()
+    expect(checkGoal({ ...b, balance: b.balance + 20 }, 0)?.reached).toEqual([1])
+    // already past it: nothing is taken
+    expect(nearGoal({ ...EMPTY, goalLevel: 1, goalStart: 0, balance: 9_990 }).balance).toBe(9_990)
+    // before the first goal is set it starts from the coins held
+    expect(nearGoal({ ...EMPTY, balance: 500 }).balance).toBe(500 + GOAL_COINS - 20)
+  })
+
+  test('/pachinko goal does it in a session and a ball finishes the goal', async ($, on) => {
+    const clock = answers(on, { balance: 1910, totalBalls: 0, jackpots: 0, kakuhens: 0, best: 0, goalLevel: 1, goalStart: 0 })
+    const toasts: string[] = []
+    on('ui.toast', (_, e) => {
+      toasts.push(e.text)
+
+      return { value: undefined }
+    })
+    on('tool.call', () => ({ result: {} }))
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    const said = (await $.command.run(run('goal')))?.text
+    expect(said).toMatch(/확인용: 코인을 9,980으로 채웠습니다/)
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    expect((await ui.find({ type: 'Text', text: /🎯/ }))?.text).toBe('🎯 목표 ▰▰▰▰▰▰▰▰▰▰ 9,980 / 10,000')
+    // a few balls: even the poorest slot pays a coin or two, the rest far more than the 20 that are missing
+    for (let i = 0; i < 4; i++) await $.tool.call({ tool: 'Edit', file_path: `/a${i}.ts`, old_string: 'a', new_string: 'b' })
+    await clock.advance(9000)
+    expect(toasts.some(t => /목표 1번째 달성!/.test(t))).toBe(true)
+    await ui.unmount()
+  })
+})
+
+describe('something to watch', () => {
+  const flying = () => dropBalls({ ...EMPTY, layout: makeLayout(2, seeded(2)) }, [WHITE], 0, seeded(9)).board
+
+  test('a ball moves like a falling thing: every piece of its way has its own time and its own ease', () => {
+    const rand = seeded(12)
+    for (let i = 0; i < 300; i++) {
+      const ball = one({ ...EMPTY, layout: makeLayout(i, rand) }, rand)
+      const m = motionOf(ball, 0)
+      expect(m.path).toBe(pathOf(ball, 0))
+      const points = m.keyPoints.split(';').map(Number)
+      const times = m.keyTimes.split(';').map(Number)
+      expect(points.length).toBe(times.length)
+      expect(m.keySplines.split(';').length).toBe(points.length - 1)
+      expect([points[0], times[0], points[points.length - 1], times[times.length - 1]]).toEqual([0, 0, 1, 1])
+      for (let k = 1; k < points.length; k++) {
+        expect(points[k]!).toBeGreaterThanOrEqual(points[k - 1]!)
+        expect(times[k]!).toBeGreaterThan(times[k - 1]!)
+      }
+      // one time for each row and for the slot, each later than the last
+      expect(m.rowTimes.length).toBe(14)
+      for (let r = 1; r < m.rowTimes.length; r++) expect(m.rowTimes[r]!).toBeGreaterThan(m.rowTimes[r - 1]!)
+    }
+    const svg = buildBoard(flying(), 0)
+    expect(svg).toMatch(/calcMode="spline"/)
+    expect(svg).toMatch(/keyPoints="0;/)
+  })
+
+  test('each pin the ball strikes answers with a ring, and a ring already over is not drawn', () => {
+    const b = flying()
+    const ball = b.balls[0]!
+    const struck = [...ball.hits].filter(h => h !== 'f').length
+    const rings = (svg: string) => (svg.match(/attributeName="r" values="3;/g) ?? []).length
+    expect(struck).toBeGreaterThan(5)
+    expect(rings(buildBoard(b, 0))).toBe(struck)
+    // half way down, the rings of the pins behind it are gone
+    const half = rings(buildBoard(b, ball.dur * 500))
+    expect(half).toBeGreaterThan(0)
+    expect(half).toBeLessThan(struck)
+    expect(rings(buildBoard(b, ball.dur * 1000 + 500))).toBe(0)
+    // nothing about the rings loops
+    expect(buildBoard(b, 0)).not.toMatch(/repeatCount/)
+  })
+
+  test('with nothing going on a quiet ball drops by itself, after a rest, and only where the board is drawn', () => {
+    const idle: Board = { ...EMPTY, isIdleOn: true }
+    expect(idleDrop(EMPTY, 5000)).toBeUndefined()
+    const first = idleDrop(idle, 5000, seeded(3))!
+    expect(first.balls.length).toBe(1)
+    const ball = first.balls[0]!
+    expect([ball.isFree, ball.isQuiet]).toEqual([true, true])
+    expect(first.totalBalls).toBe(0)
+    expect(first.log).toEqual([])
+    // not while it is still falling, nor right after it lands
+    const land = ball.at + ball.dur * 1000
+    expect(idleDrop(first, land - 100)).toBeUndefined()
+    const landed = settle(first, land)!.board
+    expect(landed.balance).toBe(0)
+    expect(idleDrop(landed, land + 500)).toBeUndefined()
+    expect(idleDrop(landed, land + 1700)?.balls.some(one => !one.isPaid)).toBe(true)
+    // a spin still going holds it back
+    const spinning: Board = { ...idle, reels: [{ id: 1, at: 0, digits: [1, 2, 3], outcome: 'miss', hope: 0, isCeiling: false, isFree: true, isDone: false }] }
+    expect(idleDrop(spinning, 5000)).toBeUndefined()
+    // its number is grey and has no word before it
+    const svg = buildBoard(first, land)
+    expect(svg).toMatch(new RegExp(`fill="#8d939a"[^>]*>\\+${ball.payout}<`))
+    expect(svg).not.toMatch(/무료/)
+  })
+
+  test('an idle desktop pane keeps dropping quiet balls that change nothing; a terminal one does not', async ($, on) => {
+    const clock = answers(on)
+    await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+    const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+    await clock.advance(1200)
+    expect(JSON.stringify(await ui.find({ type: 'Svg' }))).toMatch(/animateMotion/)
+    await clock.advance(30_000)
+    expect((await ui.find({ type: 'Text', text: /코인/ }))?.text).toMatch(/^💰 0 코인 · 콤보 0/)
+    expect((await ui.find({ type: 'Text', text: /🎯/ }))?.text).toBe('🎯 목표 ▱▱▱▱▱▱▱▱▱▱ 0 / 10,000')
+    expect((await ui.find({ type: 'Text', text: /^공 / }))?.text).toMatch(/^공 0개/)
+    await ui.unmount()
+  })
+
+  test('a terminal pane, which has no board, drops none', async ($, on) => {
+    const clock = answers(on)
+    await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+    const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+    await clock.advance(20_000)
+    expect(await ui.find({ type: 'Text', text: /대기 중/ })).toBeTruthy()
     await ui.unmount()
   })
 })

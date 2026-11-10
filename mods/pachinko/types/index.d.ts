@@ -20,6 +20,8 @@ export type Ball = {
   label: string
   // launched by hand: its coins are shown but never counted
   isFree: boolean
+  // dropped by itself while nothing is happening: a free ball shown without the word
+  isQuiet: boolean
   isPaid: boolean
 }
 
@@ -31,6 +33,10 @@ export type Reel = {
   at: number
   digits: number[]
   outcome: ReelOutcome
+  // how hopeful the omens look, 0 (plain) to 4 (gold): a higher one wins more often, but never for sure
+  hope: number
+  // the spin the ceiling guarantees
+  isCeiling: boolean
   // spun by a free ball: shown, but changes nothing in play
   isFree: boolean
   isDone: boolean
@@ -55,6 +61,10 @@ export type Board = {
   // balls left in chance time, '찬스 타임' (×2 and pulled toward the center)
   kakuhen: number
   // the goal: its level (0 before the first is set), the balance it counts from, and when the last one was reached
+  // reels that have stopped, how many of them won, and how many missed in a row (the data counter)
+  spins: number
+  hits: number
+  hamari: number
   goalLevel: number
   goalStart: number
   celebrateAt: number
@@ -62,6 +72,8 @@ export type Board = {
   resetArmedAt: number
   // the pane shows the ball guide in place of the board
   isGuideOpen: boolean
+  // quiet balls drop by themselves while nothing else is on the board (the desktop app only)
+  isIdleOn: boolean
   // the last test command failed: the next passing one is a comeback
   testFailed: boolean
   // files edited this turn, for the rush

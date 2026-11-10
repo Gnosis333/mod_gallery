@@ -52,7 +52,7 @@ describe('ball paths', () => {
             if (rr < 0 || rr > 12 || gap.has(rr * 100 + p)) continue
             if ((rr === r && p === a) || (rr === r + 1 && p === b)) continue
             const px = 14 + p * 12, py = 64 + rr * 40
-            const pr = bump.has(rr * 100 + p) ? 7.5 : gold.has(rr * 100 + p) ? 3.8 : 3
+            const pr = bump.has(rr * 100 + p) ? 7.5 : gold.has(rr * 100 + p) ? 3.8 : 3.6
             for (const q of mine) { const dd = Math.hypot(q.x - px, q.y - py) - pr - 5.5; worst = Math.min(worst, dd); if (dd < -2.5) bad1 = true }
           }
           if (bad1) { bad++; byLen[n] = (byLen[n] ?? 0) + 1 }

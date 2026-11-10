@@ -138,7 +138,7 @@ A tall aquarium with fish, a seahorse and jellyfish. While Claude works the ligh
 
 ### pachinko
 
-A plinko/pachinko game beside the chat. Each turn and tool call drops a ball through a randomly laid-out pin board into coin slots; reels, chance time, jackpots and a fixed 10,000-coin goal with a confetti celebration add the game. `/pachinko drop 10` drops free balls without spending tokens, and the 📖 button explains every ball. No picture yet, and the labels are **Korean only** for now.
+A plinko/pachinko game beside the chat. Each turn and tool call drops a ball through a randomly laid-out pin board into coin slots; reels with omens and hold lamps, chance time, jackpots, a ceiling after twelve misses and a fixed 10,000-coin goal with a confetti celebration add the game. Balls fall with weight, pins ring when struck, and a quiet ball drops by itself while Claude is idle. `/pachinko drop 10` drops free balls without spending tokens, and the 📖 button explains every ball. No picture yet, and the labels are **Korean only** for now.
 
 ## Prompt bands
 
@@ -208,7 +208,7 @@ echo '{"language":"ko"}' | claude plugin configure night-train@mod-gallery --val
 - **jungle-falls** (`/falls`): 계단식 폭포와 연꽃 연못, 동물 24종이 무작위로 방문. 쉴 때는 낮, 작업 중에는 밤. CPU를 가장 많이 씁니다.
 - **rain-window** (`/rain`): 비 오는 창가. 작업 중에는 폭풍, 번개가 치면 고양이가 눈을 뜨고 스탠드가 깜빡이며, 끝나면 무지개가 뜹니다.
 - **moon-view** (`/moon`): 달에서 본 지구. 통통 뛰는 우주인(작업 중에는 빙빙 돕니다), 무작위로 지나가는 우주 물체와 스타워즈풍 우주선.
-- **pachinko** (`/pachinko`): 빠찡코/플링코 게임. Claude의 작업이 공을 떨어뜨리고, 랜덤 핀 배치를 지나 코인 칸에 들어갑니다. 릴·찬스 타임·잭팟, 10,000코인 고정 목표와 달성 축하, `/pachinko drop 10`(토큰 안 쓰는 무료 공), 📖 공 설명 버튼. 글자는 한국어뿐입니다.
+- **pachinko** (`/pachinko`): 빠찡코/플링코 게임. Claude의 작업이 공을 떨어뜨리고, 랜덤 핀 배치를 지나 코인 칸에 들어갑니다. 릴(예고 연출·보류 램프)·찬스 타임·잭팟·천장(12연속 꽝이면 7-7-7 확정), 10,000코인 고정 목표와 달성 축하, 중력처럼 움직이는 공과 맞으면 반응하는 핀, 쉬는 동안 저절로 떨어지는 회색 공, `/pachinko drop 10`(토큰 안 쓰는 무료 공), 📖 공 설명 버튼. 글자는 한국어뿐입니다.
 - **tower-cut** (`/tower`): 빌딩 단면. 턴이 끝날 때마다 한 층씩 올라가고 20층이면 준공 불꽃놀이.
 - **desk-garden** (`/garden`): 창가 화분(턴마다 꽃이 핍니다), 졸고 있는 고양이와 수조, Claude가 일하는 작업실.
 - **reef-tank** (`/reef`): 수족관. 작업 중에는 조명이 어두워지고 노란 잠수함이 내려오며, 턴이 끝날 때마다 진주가 쌓입니다.

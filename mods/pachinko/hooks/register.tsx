@@ -27,6 +27,7 @@ const FALL = 4 // the quickest a ball takes from the top to its slot, in seconds
 const GAP = 180 // ms between balls dropped together
 const MAX_FLYING = 40
 const MAX_REELS = 4 // spins waiting their turn
+const CEILING = 12 // reels that miss in a row before the next one is a sure 777
 const KAKUHEN_BALLS = 15
 const KAKUHEN_MAX = 45
 const KAKUHEN_MULT = 2
@@ -40,8 +41,7 @@ const JACKPOT_CHANCE = 0.005
 export const GOAL_COINS = 10_000
 const CELEBRATE_MS = 4600
 const RESET_WINDOW = 5000
-const BUMP = 5 // lanes a bumper throws the ball
-const STRONG = 0.4 // the chance a plain or gold pin kicks the ball three lanes instead of one
+const STRONG = 0.4 // the chance a pin of ordinary spring kicks the ball three lanes or more instead of one
 const MOMENTUM = 0.2 // how much a ball leans the way it last went
 
 const laneX = (p: number) => LEFT + (p * DX) / 2
@@ -51,6 +51,15 @@ const s3 = (v: number) => String(Math.round(v * 1000) / 1000)
 const FONT = 'font-family="system-ui,sans-serif"'
 
 const pinId = (r: number, p: number) => r * 100 + p
+
+// How springy a pin is, fixed for the board: a third are soft (0.6), the rest ordinary (1) or lively (1.5). A
+// lively pin kicks harder and more often, a soft one less, and the pins are drawn a little bigger or smaller.
+export const springOf = (layoutId: number, r: number, p: number) => {
+  const h = Math.imul((layoutId + 3) * 7919 + r * 131 + p * 17, 2654435761) >>> 0
+  const tier = (h >>> 8) % 10
+
+  return tier < 3 ? 0.6 : tier < 7 ? 1 : 1.5
+}
 const isWall = (p: number) => p === 0 || p === LANES
 
 // A fresh board: about one pin in eight missing, a few bumpers that throw the ball three lanes, a few gold
@@ -104,7 +113,9 @@ const pinsSvg = (layout: Layout) => {
         // a gold pin with a still, soft halo
         svg += `<circle cx="${x}" cy="${y}" r="7" fill="#d9b65a" opacity=".16"/><circle cx="${x}" cy="${y}" r="3.8" fill="#c9a24a"/>`
       } else {
-        svg += `<circle cx="${x}" cy="${y}" r="3" fill="#6a7078"/>`
+        // a lively pin is a little bigger, a soft one a little smaller
+        const spring = springOf(layout.id, r, p)
+        svg += `<circle cx="${x}" cy="${y}" r="${spring > 1 ? 3.6 : spring < 1 ? 2.5 : 3}" fill="url(#pin)"/>`
       }
     }
   }
@@ -135,16 +146,25 @@ const DEFS =
   '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26282b"/><stop offset="1" stop-color="#1c1e21"/></linearGradient>' +
   '<linearGradient id="fever" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#30252a"/><stop offset="1" stop-color="#1f1c20"/></linearGradient>' +
   '<linearGradient id="kakuhen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2834"/><stop offset=".5" stop-color="#22252b"/><stop offset="1" stop-color="#2a2b30"/></linearGradient>' +
+  '<radialGradient id="pin" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#a9b0b8"/><stop offset="1" stop-color="#555b62"/></radialGradient>' +
   '<radialGradient id="gold"><stop offset="0" stop-color="#fff7c0"/><stop offset=".6" stop-color="#ffc83a"/><stop offset="1" stop-color="#d48a00"/></radialGradient>' +
   '<linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d6d"/><stop offset=".25" stop-color="#ffd23f"/><stop offset=".5" stop-color="#3ddc84"/><stop offset=".75" stop-color="#3ad4ff"/><stop offset="1" stop-color="#b07cff"/></linearGradient>' +
   '</defs>'
 
-// The ball's way down along its lanes: a hop over each pin it meets, higher off a bumper, a straight drop
-// through a gap, and a last hop off a divider when it comes down on one.
-export const pathOf = (ball: Ball, jitter: number) => {
+// The way down for a ball along its lanes, in pieces: the fall onto the top row, then for each row a hop over
+// the pin it meets (higher off a bumper), a straight drop through a gap, or a kick along the gap between two
+// rows, and a last hop off a divider when it comes down on one. Each piece carries its share of the time the
+// fall takes and how the ball moves in that time, so it slows at the top of a hop and speeds up coming down.
+type Piece = { d: string; pts: number[][]; weight: number; spline: string }
+const HOP = '.1 .35 .6 .1' // quick off the pin, slow over the top, quick coming down
+const FALLING = '.5 0 1 1'
+const piecesOf = (ball: Ball, jitter: number) => {
   const lanes = ball.lanes
   let x = laneX(lanes[0] ?? ball.start)
-  let d = `M${r1(x + jitter)} 10 L${r1(x)} ${Y0 - 9}`
+  const start = `M${r1(x + jitter)} 10`
+  const pieces: Piece[] = [{ d: ` L${r1(x)} ${Y0 - 9}`, pts: [[x + jitter, 10], [x, Y0 - 9]], weight: 0.9, spline: FALLING }]
+  // the piece each row starts with: the ball is on the pin of that row when it begins
+  const rowAt: number[] = []
   for (let r = 0; r <= ROWS; r++) {
     const nx = laneX(lanes[r + 1] ?? 0)
     const y = Y0 + r * DY - 9
@@ -152,19 +172,103 @@ export const pathOf = (ball: Ball, jitter: number) => {
     // each hop its own height, from the ball and the row
     const lift = 12 + ((ball.id * 13 + r * 7) % 13)
     const hit = ball.hits[r] ?? ''
-    if (nx === x) d += ` L${r1(x)} ${ny}`
+    rowAt.push(pieces.length)
+    if (nx === x) pieces.push({ d: ` L${r1(x)} ${ny}`, pts: [[x, y], [x, ny]], weight: r === ROWS ? 0.8 : 0.7, spline: r === ROWS ? FALLING : '0 0 1 1' })
     else if (Math.abs(nx - x) > DX) {
       // a kick of three lanes or more travels along the gap between two rows of pins, so it never runs through
       // one, and drops onto the pin it meets at the far end
       const dx = nx - x
-      d += ` C${r1(x + dx * 0.1)} ${y - 17} ${r1(nx - dx * 0.25)} ${y - 17} ${r1(nx)} ${y - 12} L${r1(nx)} ${ny}`
-    } else if (hit === 'k') d += ` Q${r1(x + (nx - x) * 0.5)} ${y - 44 - (lift % 8)} ${r1(nx)} ${ny}`
-    else if (hit === 'B' || hit === 'G') d += ` Q${r1(x + (nx - x) * 0.5)} ${y - 24 - (lift % 6)} ${r1(nx)} ${ny}`
-    else d += ` Q${r1(x + (nx - x) * 0.55)} ${y - lift} ${r1(nx)} ${ny}`
+      const far = Math.abs(dx) / (DX / 2)
+      pieces.push({
+        d: ` C${r1(x + dx * 0.1)} ${y - 17} ${r1(nx - dx * 0.25)} ${y - 17} ${r1(nx)} ${y - 12}`,
+        pts: [[x, y], [x + dx * 0.1, y - 17], [nx - dx * 0.25, y - 17], [nx, y - 12]],
+        weight: 0.8 + 0.1 * far,
+        spline: '.15 .5 .6 .9',
+      })
+      pieces.push({ d: ` L${r1(nx)} ${ny}`, pts: [[nx, y - 12], [nx, ny]], weight: 0.35, spline: '.3 .1 1 1' })
+    } else {
+      const isHard = hit === 'k' || hit === 'B' || hit === 'G'
+      const top = hit === 'k' ? y - 44 - (lift % 8) : isHard ? y - 24 - (lift % 6) : y - lift
+      const cx = x + (nx - x) * (isHard ? 0.5 : 0.55)
+      pieces.push({ d: ` Q${r1(cx)} ${top} ${r1(nx)} ${ny}`, pts: [[x, y], [cx, top], [nx, ny]], weight: hit === 'k' ? 1.3 : 1, spline: HOP })
+    }
     x = nx
   }
 
-  return d
+  return { start, pieces, rowAt }
+}
+
+export const pathOf = (ball: Ball, jitter: number) => {
+  const { start, pieces } = piecesOf(ball, jitter)
+
+  return start + pieces.map(piece => piece.d).join('')
+}
+
+// How long a piece is, by walking along it.
+const lengthOf = (pts: number[][]) => {
+  const at = (t: number) => {
+    let line = pts
+    while (line.length > 1) {
+      const from = line
+      line = from.slice(1).map((q, i) => [(from[i]?.[0] ?? 0) * (1 - t) + (q[0] ?? 0) * t, (from[i]?.[1] ?? 0) * (1 - t) + (q[1] ?? 0) * t])
+    }
+
+    return line[0] ?? [0, 0]
+  }
+  let len = 0
+  let last = at(0)
+  for (let i = 1; i <= 12; i++) {
+    const next = at(i / 12)
+    len += Math.hypot((next[0] ?? 0) - (last[0] ?? 0), (next[1] ?? 0) - (last[1] ?? 0))
+    last = next
+  }
+
+  return len
+}
+
+// The path with its timing for animateMotion, and when (as a share of the fall) the ball is on the pin of each row.
+export const motionOf = (ball: Ball, jitter: number) => {
+  const { start, pieces, rowAt } = piecesOf(ball, jitter)
+  const lens = pieces.map(piece => lengthOf(piece.pts))
+  const length = lens.reduce((a, b) => a + b, 0)
+  const weight = pieces.reduce((a, piece) => a + piece.weight, 0)
+  const points = [0]
+  const times = [0]
+  pieces.forEach((piece, i) => {
+    points.push((points[i] ?? 0) + (lens[i] ?? 0) / length)
+    times.push((times[i] ?? 0) + piece.weight / weight)
+  })
+  // the ends are exactly 1, whatever the sums rounded to
+  points[points.length - 1] = 1
+  times[times.length - 1] = 1
+
+  return {
+    path: start + pieces.map(piece => piece.d).join(''),
+    keyPoints: points.map(v => s3(v)).join(';'),
+    keyTimes: times.map(v => s3(v)).join(';'),
+    keySplines: pieces.map(piece => piece.spline).join(';'),
+    rowTimes: rowAt.map(i => times[i] ?? 0),
+  }
+}
+
+// A ring that opens off each pin the ball strikes, at the moment it strikes: white off a plain pin, gold off a
+// gold one, rose off a bumper, wider off a hard kick. One that was over before the picture was built is left out.
+const strikesSvg = (ball: Ball, begin: number, rowTimes: number[]) => {
+  let g = ''
+  for (let r = 0; r < ROWS; r++) {
+    const hit = ball.hits[r] ?? 'f'
+    if (hit === 'f') continue
+    const at = begin + (rowTimes[r] ?? 0) * ball.dur
+    if (at + 0.45 <= 0) continue
+    const color = hit === 'g' || hit === 'G' ? '#f2d27a' : hit === 'k' ? '#e59bc0' : '#dfe4ea'
+    const wide = hit === 'k' ? 15 : hit === 'B' || hit === 'G' ? 12 : 8
+    g +=
+      `<circle cx="${r1(laneX(ball.lanes[r] ?? 0))}" cy="${Y0 + r * DY}" r="3" fill="none" stroke="${color}" stroke-width="1.4" opacity="0">` +
+      `<animate attributeName="r" values="3;${wide}" begin="${s3(at)}s" dur=".45s" fill="freeze"/>` +
+      `<animate attributeName="opacity" values=".8;0" begin="${s3(at)}s" dur=".45s" fill="freeze"/></circle>`
+  }
+
+  return g
 }
 
 const ballSvg = (ball: Ball, begin: number) => {
@@ -181,12 +285,13 @@ const ballSvg = (ball: Ball, begin: number) => {
   const golds = [...ball.hits].filter(h => h === 'g' || h === 'G').length
   const label = isBust
     ? '꽝'
-    : `${ball.isFree ? '무료 ' : ''}${ball.label ? `${ball.label} ` : ''}${golds > 0 ? `★${golds} ` : ''}+${ball.payout.toLocaleString('en-US')}`
+    : `${ball.isFree && !ball.isQuiet ? '무료 ' : ''}${ball.label ? `${ball.label} ` : ''}${golds > 0 ? `★${golds} ` : ''}+${ball.payout.toLocaleString('en-US')}`
   const labelColor = isBust ? '#ff6b6b' : ball.isFree ? '#8d939a' : isJackpot || isSpecial ? '#ffe066' : '#ffffff'
 
   // An animation whose whole run ended before the picture was built never runs, so its fill="freeze" never
   // holds: a part already done is left out, and every part here ends at opacity 0 anyway.
   const isLive = (dur: number) => begin + ball.dur + dur > 0
+  const motion = motionOf(ball, jitter)
 
   return (
     // the slot lights up as the ball drops in
@@ -197,10 +302,13 @@ const ballSvg = (ball: Ball, begin: number) => {
     (isJackpot && isLive(1.2)
       ? `<rect width="${W}" height="${H}" fill="#dfe4ea" opacity="0"><animate attributeName="opacity" values="0;.18;0" begin="${land}s" dur="1.2s" fill="freeze"/></rect>`
       : '') +
+    strikesSvg(ball, begin, motion.rowTimes) +
+    // the ball, with a glint on it
     (isLive(0)
-      ? `<circle r="${radius}" fill="${fill}" stroke="${stroke}" stroke-opacity=".7" stroke-width="1.2" opacity="0">` +
-        `<animateMotion path="${pathOf(ball, jitter)}" begin="${b}s" dur="${s3(ball.dur)}s" fill="freeze"/>` +
-        `<animate attributeName="opacity" values="1;1;0" keyTimes="0;.82;1" begin="${b}s" dur="${s3(ball.dur + 0.6)}s" fill="freeze"/></circle>`
+      ? `<g opacity="0"><circle r="${radius}" fill="${fill}" stroke="${stroke}" stroke-opacity=".7" stroke-width="1.2"/>` +
+        `<circle cx="${r1(-radius * 0.32)}" cy="${r1(-radius * 0.36)}" r="${r1(radius * 0.3)}" fill="#ffffff" opacity=".5"/>` +
+        `<animateMotion path="${motion.path}" keyPoints="${motion.keyPoints}" keyTimes="${motion.keyTimes}" keySplines="${motion.keySplines}" calcMode="spline" begin="${b}s" dur="${s3(ball.dur)}s" fill="freeze"/>` +
+        `<animate attributeName="opacity" values="1;1;0" keyTimes="0;.82;1" begin="${b}s" dur="${s3(ball.dur + 0.6)}s" fill="freeze"/></g>`
       : '') +
     (isLive(1.4)
       ? `<text x="${r1(Math.min(W - 40, Math.max(40, x)))}" y="${SLOT_TOP + 20}" text-anchor="middle" font-size="${isJackpot || isSpecial ? 16 : 12}" font-weight="800" ${FONT} fill="${labelColor}" stroke="#000" stroke-width=".6" opacity="0">${label}` +
@@ -216,7 +324,29 @@ export const reelStops = (reel: Pick<Reel, 'digits'>) => (reel.digits[0] === ree
 export const reelMs = (reel: Pick<Reel, 'digits'>) => (reelStops(reel)[2] ?? 2) * 1000
 const REEL_LINGER = 2200 // ms the result stays after the last reel stops
 
-export const rollReel = (rand: () => number): { digits: number[]; outcome: ReelOutcome } => {
+// The omens a spin shows before it stops, from plain to gold. A higher one wins more often (about 3%, 15%,
+// 29%, 44% and 74% by tier), but even gold can miss and plain can win.
+const HOPE_WEIGHTS: Record<ReelOutcome, number[]> = {
+  miss: [50, 28, 14, 7, 1],
+  bonus: [12, 30, 30, 22, 6],
+  kakuhen: [0, 8, 22, 38, 32],
+}
+export const HOPE_COLORS = ['#cfd5dc', '#6a9fe0', '#59b98a', '#e0645f', '#e8c04a']
+export const HOPE_DOTS = ['⚪', '🔵', '🟢', '🔴', '🌈']
+const HOPE_WORDS = ['★ SPIN ★', '푸른 예고', '초록 예고', '붉은 예고!', '황금 예고!!']
+
+const pickHope = (outcome: ReelOutcome, rand: () => number) => {
+  const weights = HOPE_WEIGHTS[outcome]
+  let r = rand() * 100
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i] ?? 0
+    if (r < 0) return i
+  }
+
+  return weights.length - 1
+}
+
+const rollDigits = (rand: () => number): { digits: number[]; outcome: ReelOutcome } => {
   const r = rand()
   const digit = () => 1 + Math.floor(rand() * 9)
   const other = (a: number) => (a % 9) + 1
@@ -238,6 +368,18 @@ export const rollReel = (rand: () => number): { digits: number[]; outcome: ReelO
   return { digits: [a, b === a ? other(a) : b, digit()], outcome: 'miss' }
 }
 
+// One spin: its digits, how it ends and the omens it shows. A spin the ceiling guarantees is a gold 777.
+export const rollReel = (rand: () => number, isCeiling = false): { digits: number[]; outcome: ReelOutcome; hope: number; isCeiling: boolean } => {
+  if (isCeiling) return { digits: [7, 7, 7], outcome: 'kakuhen', hope: 4, isCeiling: true }
+  const roll = rollDigits(rand)
+
+  return { ...roll, hope: pickHope(roll.outcome, rand), isCeiling: false }
+}
+
+// How many reels in a row would have missed once everything waiting has stopped.
+export const pendingStreak = (hamari: number, reels: Pick<Reel, 'outcome' | 'isFree' | 'isDone'>[]) =>
+  reels.filter(reel => !reel.isDone && !reel.isFree).reduce((streak, reel) => (reel.outcome === 'miss' ? streak + 1 : 0), hamari)
+
 const RW = 50
 const RH = 60
 const RX = W / 2 - (3 * RW + 2 * 10) / 2
@@ -249,8 +391,8 @@ const reelSvg = (reel: Reel, begin: number) => {
   const isReach = reel.digits[0] === reel.digits[1]
   let g =
     `<g opacity="0"><set attributeName="opacity" to="1" begin="${s3(begin)}s"/><set attributeName="opacity" to="0" begin="${s3(end + REEL_LINGER / 1000)}s"/>` +
-    `<rect x="${r1(RX - 14)}" y="${RY - 30}" width="${3 * RW + 20 + 28}" height="${RH + 70}" rx="12" fill="#1a1c1f" fill-opacity=".94" stroke="#4d535a" stroke-width="2"/>` +
-    `<text x="${W / 2}" y="${RY - 12}" text-anchor="middle" font-size="11" font-weight="800" ${FONT} fill="#8b9198">★ SPIN ★</text>`
+    `<rect x="${r1(RX - 14)}" y="${RY - 30}" width="${3 * RW + 20 + 28}" height="${RH + 70}" rx="12" fill="#1a1c1f" fill-opacity=".94" stroke="${reel.hope > 0 ? HOPE_COLORS[reel.hope] : '#4d535a'}" stroke-width="${reel.hope > 0 ? 3 : 2}"/>` +
+    `<text x="${W / 2}" y="${RY - 12}" text-anchor="middle" font-size="${reel.hope > 0 ? 13 : 11}" font-weight="800" ${FONT} fill="${reel.hope > 0 ? HOPE_COLORS[reel.hope] : '#8b9198'}">${reel.isCeiling ? '천장 보너스!' : HOPE_WORDS[reel.hope]}</text>`
   reel.digits.forEach((res, i) => {
     const x = RX + i * (RW + 10)
     const n = 18 + i * 6
@@ -274,7 +416,7 @@ const reelSvg = (reel: Reel, begin: number) => {
   })
   if (isReach && end > 0) {
     g +=
-      `<text x="${W / 2}" y="${RY + RH + 30}" text-anchor="middle" font-size="16" font-weight="900" ${FONT} fill="#ff4d6d" opacity="0">리치!` +
+      `<text x="${W / 2}" y="${RY + RH + 30}" text-anchor="middle" font-size="${reel.hope >= 3 ? 20 : 16}" font-weight="900" ${FONT} fill="${reel.hope >= 4 ? '#e8c04a' : '#ff4d6d'}" opacity="0">${reel.hope >= 3 ? '스페셜 리치!!' : '리치!'}` +
       `<animate attributeName="opacity" values="0;1" begin="${s3(begin + (stops[1] ?? 1.5))}s" dur="${s3((stops[2] ?? 3) - (stops[1] ?? 1.5))}s"/></text>`
   }
   const [word, color] =
@@ -401,6 +543,26 @@ const celebrationSvg = (b: Board, begin: number) => {
   return g
 }
 
+// The hold lamps along the bottom: one for each spin still waiting its turn, in the color of its omens. A lamp
+// goes out when its spin starts; one already out when the picture is built is not drawn.
+const LAMP_Y = H - 15
+const lampsSvg = (b: Board, now: number) => {
+  const waiting = b.reels.filter(reel => !reel.isDone && !reel.isFree && reel.at > now).slice(0, MAX_REELS)
+  // down in the left corner, clear of the SPIN label under the center slot
+  const x0 = 62
+  let g = `<text x="${r1(x0 - 34)}" y="${LAMP_Y + 4}" text-anchor="middle" font-size="11" font-weight="800" ${FONT} fill="#6e757d">보류</text>`
+  for (let i = 0; i < MAX_REELS; i++) {
+    const x = r1(x0 + i * 22)
+    g += `<circle cx="${x}" cy="${LAMP_Y}" r="7" fill="none" stroke="#4d535a" stroke-width="1.6"/>`
+    const reel = waiting[i]
+    if (reel) {
+      g += `<circle cx="${x}" cy="${LAMP_Y}" r="5.6" fill="${HOPE_COLORS[reel.hope]}"><set attributeName="opacity" to="0" begin="${s3((reel.at - now) / 1000)}s"/></circle>`
+    }
+  }
+
+  return g
+}
+
 export const buildBoard = (b: Board, now: number) => {
   const isFever = b.feverUntil > now
   const isKakuhen = b.kakuhen > 0
@@ -425,6 +587,7 @@ export const buildBoard = (b: Board, now: number) => {
     pinsSvg(b.layout) +
     slotsSvg() +
     b.balls.map(ball => ballSvg(ball, (ball.at - now) / 1000)).join('') +
+    lampsSvg(b, now) +
     b.reels.map(reel => reelSvg(reel, (reel.at - now) / 1000)).join('') +
     celebrationSvg(b, (b.celebrateAt - now) / 1000) +
     '</svg>'
@@ -483,6 +646,8 @@ export const BALL_GUIDE: { key: GuideKey; dot: string; name: string; when: strin
 export const GUIDE_NOTES = [
   '코인 = 공 값 × 칸 배율(황금 핀마다 +0.5) × 콤보 × 피버(×2) × 찬스 타임(×2)',
   '공이 칸에 들어갈 때 번 코인이 떠오릅니다',
+  '보류 램프: 가운데 칸에 들어간 공이 만든 릴이 차례를 기다립니다. 색이 붉고 금빛일수록 당첨 기대가 큽니다 (⚪ 평범 · 🔵 · 🟢 · 🔴 · 🌈 금빛)',
+  `천장: 릴이 ${CEILING}번 연속 꽝이면 다음 릴은 7-7-7이 확정됩니다. 하마리 4/12 = 연속 꽝 4번, 12번이면 천장`,
 ]
 export const guideLine = (g: { dot: string; name: string; when: string; effect: string }) => `${g.dot} ${g.name} · ${g.when} → ${g.effect}`
 export const guideText = () => ['공 설명', ...BALL_GUIDE.map(guideLine), ...GUIDE_NOTES].join('\n')
@@ -502,11 +667,15 @@ export const EMPTY: Board = {
   combo: 0,
   feverUntil: 0,
   kakuhen: 0,
+  spins: 0,
+  hits: 0,
+  hamari: 0,
   goalLevel: 0,
   goalStart: 0,
   celebrateAt: 0,
   resetArmedAt: 0,
   isGuideOpen: false,
+  isIdleOn: false,
   testFailed: false,
   turnFiles: [],
   isRush: false,
@@ -517,9 +686,9 @@ export const EMPTY: Board = {
   kakuhens: 0,
   best: 0,
 }
-const board = atom({ plugin: 'pachinko', key: 'board' } as const, EMPTY, { shape: 'board-8' })
+const board = atom({ plugin: 'pachinko', key: 'board' } as const, EMPTY, { shape: 'board-10' })
 
-type Bank = Pick<Board, 'balance' | 'totalBalls' | 'jackpots' | 'kakuhens' | 'best' | 'goalLevel' | 'goalStart'>
+type Bank = Pick<Board, 'balance' | 'totalBalls' | 'jackpots' | 'kakuhens' | 'best' | 'goalLevel' | 'goalStart' | 'spins' | 'hits' | 'hamari'>
 const BANK = 'bank'
 
 export const comboMult = (combo: number) => Math.min(3, 1 + Math.floor(combo / 5) * 0.5)
@@ -527,7 +696,7 @@ const coins = (n: number) => n.toLocaleString('en-US')
 const pushLog = (log: string[], line: string) => [line, ...log].slice(0, 5)
 
 export type Aim = 'any' | 'left' | 'center' | 'right'
-export type Drop = { color: string; value: number; kind?: BallKind; label?: string; aim?: Aim; isFree?: boolean }
+export type Drop = { color: string; value: number; kind?: BallKind; label?: string; aim?: Aim; isFree?: boolean; isQuiet?: boolean }
 
 // Which top-row pins a launch aims at, as the first and last pin (lane / 2).
 const AIMS: Record<Aim, [number, number]> = { any: [0, 13], left: [0, 4], center: [5, 8], right: [9, 13] }
@@ -538,9 +707,10 @@ const MAX_LAUNCH = 20
 export type GameEvent = 'jackpot' | 'fever' | 'multiball' | 'kakuhen' | 'bonus' | 'freeBonus' | 'shuffle'
 
 // One ball's way down the layout. At a pin it bounces left or right, leaning the way it last went
-// (MOMENTUM) and toward the center by `pull`; one bounce in four is a strong one that kicks it three lanes
-// ('B', 'G' on a gold pin). A bumper throws it five, a gap or the space between pins lets it fall a row, and
-// one that comes down on a divider hops off it into a slot. A kick that would leave the board is cut short.
+// (MOMENTUM) and toward the center by `pull`. Most bounces move it a lane; a strong one kicks it three, five
+// or even seven ('B', 'G' on a gold pin), more often and farther off a lively pin than a soft one. A bumper
+// always throws it three to seven lanes. A gap or the space between pins lets it fall a row, and one that
+// comes down on a divider hops off it into a slot. A kick that would leave the board is cut short.
 export const walk = (layout: Layout, start: number, pull: number, rand: () => number) => {
   const gaps = new Set(layout.gaps)
   const bumpers = new Set(layout.bumpers)
@@ -548,6 +718,19 @@ export const walk = (layout: Layout, start: number, pull: number, rand: () => nu
   let last = 0
   const lean = (p: number) => Math.min(0.9, Math.max(0.1, 0.5 + (p < LANES / 2 ? pull : p > LANES / 2 ? -pull : 0) + last * MOMENTUM))
   const onBoard = (q: number) => q >= 0 && q <= LANES
+  // the farthest the kick can go without leaving the board, an odd number of lanes
+  const farthest = (from: number, dir: number, want: number) => {
+    let n = want
+    while (n > 1 && !onBoard(from + dir * n)) n -= 2
+
+    return n
+  }
+  // how far a kick goes, from 3 up to 7: a lively pin pushes the roll toward the far end
+  const kick = (spring: number, cuts: [number, number]) => {
+    const roll = rand() ** (1 / spring)
+
+    return roll < cuts[0] ? 3 : roll < cuts[1] ? 5 : 7
+  }
   const lanes = [start]
   let hits = ''
   let p = start
@@ -561,12 +744,14 @@ export const walk = (layout: Layout, start: number, pull: number, rand: () => nu
     const dir = p === 0 ? 1 : p === LANES ? -1 : rand() < lean(p) ? 1 : -1
     if (bumpers.has(id)) {
       hits += 'k'
-      p += [BUMP, 3, 1].map(n => dir * n).find(step => onBoard(p + step)) ?? dir
+      p += dir * farthest(p, dir, kick(1, [0.25, 0.7]))
     } else {
       const isGold = golds.has(id)
-      const isStrong = rand() < STRONG && onBoard(p + dir * 3)
+      const spring = springOf(layout.id, r, p)
+      const isStrong = rand() < STRONG * spring && onBoard(p + dir * 3)
+      const step = isStrong ? farthest(p, dir, kick(spring, [0.55, 0.88])) : 1
       hits += isGold ? (isStrong ? 'G' : 'g') : isStrong ? 'B' : 'b'
-      p += isStrong ? dir * 3 : dir
+      p += dir * step
     }
     last = dir
     lanes.push(p)
@@ -639,6 +824,7 @@ export const dropBalls = (b: Board, drops: Drop[], now: number, rand: () => numb
       kind,
       label: drop.label ?? '',
       isFree,
+      isQuiet: drop.isQuiet === true,
       isPaid: false,
     })
     at += GAP + Math.round(rand() * 120)
@@ -648,6 +834,20 @@ export const dropBalls = (b: Board, drops: Drop[], now: number, rand: () => numb
   const counted = balls.filter(one => !one.isFree).length
 
   return { board: { ...b, seq, layout, balls: flying, feverUntil, kakuhen, totalBalls: b.totalBalls + counted }, events }
+}
+
+// Something to watch while nothing is happening: once the last ball has landed and a moment has passed, a
+// quiet grey ball drops by itself. It is a free ball: it shows its coins and counts for nothing. Only where
+// the board is drawn (the desktop app). Undefined when it is not time for one.
+const IDLE_COLOR = '#8f969e'
+export const idleDrop = (b: Board, now: number, rand: () => number = Math.random) => {
+  if (!b.isIdleOn || b.reels.some(reel => !reel.isDone)) return undefined
+  if (b.balls.some(one => !one.isPaid)) return undefined
+  const landed = Math.max(0, ...b.balls.map(one => one.at + one.dur * 1000))
+  const rest = 900 + ((b.seq * 131) % 700)
+  if (now < landed + rest) return undefined
+
+  return dropBalls(b, [{ color: IDLE_COLOR, value: LAUNCH_VALUE, isFree: true, isQuiet: true }], now, rand).board
 }
 
 // A launch by hand: n free balls at the aim. They play out on the board like any other, but the coins they
@@ -673,6 +873,9 @@ export const settle = (b: Board, now: number, rand: () => number = Math.random) 
   let seq = b.seq
   let kakuhen = b.kakuhen
   let kakuhens = b.kakuhens
+  let spins = b.spins
+  let hits = b.hits
+  let hamari = b.hamari
   let log = b.log
   const reels = b.reels
     .filter(reel => reel.at + reelMs(reel) + REEL_LINGER > now)
@@ -683,11 +886,18 @@ export const settle = (b: Board, now: number, rand: () => number = Math.random) 
 
         return { ...reel, isDone: true }
       }
+      // the data counter moves only when a reel stops, so it never gives a spin away
+      spins += 1
+      if (reel.outcome === 'miss') hamari += 1
+      else {
+        hits += 1
+        hamari = 0
+      }
       if (reel.outcome === 'kakuhen') {
         kakuhen = Math.min(KAKUHEN_MAX, kakuhen + KAKUHEN_BALLS)
         kakuhens += 1
         events.push('kakuhen')
-        log = pushLog(log, `🌈 7-7-7 찬스 타임! 공 ${KAKUHEN_BALLS}개 동안 ×${KAKUHEN_MULT}`)
+        log = pushLog(log, reel.isCeiling ? `🏯 천장! 꽝이 ${CEILING}번 이어져 7-7-7 확정, 공 ${KAKUHEN_BALLS}개 동안 ×${KAKUHEN_MULT}` : `🌈 7-7-7 찬스 타임! 공 ${KAKUHEN_BALLS}개 동안 ×${KAKUHEN_MULT}`)
       } else if (reel.outcome === 'bonus') {
         events.push('bonus')
         log = pushLog(log, `🎰 ${reel.digits.join('-')} 보너스 10구`)
@@ -701,7 +911,9 @@ export const settle = (b: Board, now: number, rand: () => number = Math.random) 
     if (reels.filter(reel => !reel.isDone).length >= MAX_REELS) break
     const last = reels[reels.length - 1]
     const at = Math.max(now, last ? last.at + reelMs(last) + 400 : 0)
-    reels.push({ id: seq++, at, ...rollReel(rand), isFree: one.isFree, isDone: false })
+    // twelve misses in a row, counting the spins still waiting, and the next one is a sure 7-7-7
+    const isCeiling = !one.isFree && pendingStreak(hamari, reels) >= CEILING
+    reels.push({ id: seq++, at, ...rollReel(rand, isCeiling), isFree: one.isFree, isDone: false })
   }
   const counted = landed.filter(one => !one.isFree)
   const won = counted.reduce((sum, one) => sum + one.payout, 0)
@@ -712,6 +924,9 @@ export const settle = (b: Board, now: number, rand: () => number = Math.random) 
       seq,
       kakuhen,
       kakuhens,
+      spins,
+      hits,
+      hamari,
       log,
       reels,
       balance: b.balance + won,
@@ -781,7 +996,7 @@ let cache = { key: '', svg: '' }
 
 async function save($: EngineInterface) {
   const b = await read($, board)
-  const bank: Bank = { balance: b.balance, totalBalls: b.totalBalls, jackpots: b.jackpots, kakuhens: b.kakuhens, best: b.best, goalLevel: b.goalLevel, goalStart: b.goalStart }
+  const bank: Bank = { balance: b.balance, totalBalls: b.totalBalls, jackpots: b.jackpots, kakuhens: b.kakuhens, best: b.best, goalLevel: b.goalLevel, goalStart: b.goalStart, spins: b.spins, hits: b.hits, hamari: b.hamari }
   await $.store.set(BANK, bank)
 }
 
@@ -859,6 +1074,8 @@ async function tick($: EngineInterface) {
     await update($, board, cur => ({ ...cur, tick: second }))
   } else if (b.feverUntil !== 0 && b.feverUntil <= now) {
     await update($, board, cur => ({ ...cur, feverUntil: 0 }))
+  } else if (idleDrop(b, now)) {
+    await update($, board, cur => idleDrop(cur, now) ?? cur)
   }
 }
 
@@ -881,10 +1098,20 @@ export const resetBoard = (b: Board): Board => ({
   ...EMPTY,
   seq: b.seq,
   layout: b.layout,
+  isIdleOn: b.isIdleOn,
   goalLevel: 1,
   goalStart: 0,
   log: ['↺ 점수 리셋: 0코인부터 다시'],
 })
+
+// For trying the celebration: fills the coins up to 20 short of the goal, so the next ball or two finish it.
+// It only ever adds coins, and says so in the log.
+export const nearGoal = (b: Board): Board => {
+  const base = b.goalLevel === 0 ? { ...b, goalLevel: 1, goalStart: b.balance } : b
+  const target = base.goalStart + GOAL_COINS - 20
+
+  return { ...base, balance: Math.max(base.balance, target), log: pushLog(base.log, '🧪 확인용: 목표 20코인 앞까지 채움') }
+}
 
 // A press arms the reset; a second press within RESET_WINDOW does it. Says whether it reset.
 async function pressReset($: EngineInterface) {
@@ -910,6 +1137,16 @@ export const goalLine = (b: Board) => {
   return `🎯 목표 ${'▰'.repeat(filled)}${'▱'.repeat(10 - filled)} ${coins(got)} / ${coins(GOAL_COINS)}`
 }
 
+// '📊 회전 42 · 당첨 7 · 하마리 4/12': as wide as the goal line, so it never wraps. Misses in a row, out of the ceiling.
+export const dataLine = (b: Board) => `📊 회전 ${coins(b.spins)} · 당첨 ${coins(b.hits)} · 하마리 ${b.hamari}/${CEILING}`
+
+// The spins waiting their turn as colored dots, for the terminal: '보류 🔵⚪🔴'. Empty when none wait.
+export const holdLine = (b: Board, now: number) => {
+  const waiting = b.reels.filter(reel => !reel.isDone && !reel.isFree && reel.at > now).slice(0, MAX_REELS)
+
+  return waiting.length === 0 ? '' : `보류 ${waiting.map(reel => HOPE_DOTS[reel.hope]).join('')}`
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const bank = (await $.store.get(BANK)) as Partial<Bank> | undefined
@@ -921,14 +1158,15 @@ export const register: Register = on => {
         jackpots: Math.max(b.jackpots, bank.jackpots ?? 0),
         kakuhens: Math.max(b.kakuhens, bank.kakuhens ?? 0),
         best: Math.max(b.best, bank.best ?? 0),
+        ...((bank.spins ?? 0) > b.spins ? { spins: bank.spins ?? 0, hits: bank.hits ?? 0, hamari: bank.hamari ?? 0 } : {}),
         ...((bank.goalLevel ?? 0) > b.goalLevel ? { goalLevel: bank.goalLevel ?? 0, goalStart: bank.goalStart ?? 0 } : {}),
       }))
     }
     // the first goal counts from what is in the bank now
     await update($, board, b => (b.goalLevel === 0 ? { ...b, goalLevel: 1, goalStart: b.balance } : b))
-    // a board of its own for each session
-    await update($, board, b => ({ ...b, seq: b.seq + 1, layout: makeLayout(b.seq, Math.random) }))
-    await $.command.register({ name: 'pachinko', description: 'Open the pachinko pane and see the goal; "/pachinko balls" explains each ball, "/pachinko drop [n] [left|center|right]" drops free balls, "/pachinko reset" starts the score over' })
+    // a board of its own for each session; quiet balls drop by themselves only where the board is drawn
+    await update($, board, b => ({ ...b, seq: b.seq + 1, layout: makeLayout(b.seq, Math.random), isIdleOn: e.surface === 'desktop' }))
+    await $.command.register({ name: 'pachinko', description: 'Open the pachinko pane and see the goal; "/pachinko balls" explains each ball, "/pachinko goal" fills the coins to 20 short of the goal to try the celebration, "/pachinko drop [n] [left|center|right]" drops free balls, "/pachinko reset" starts the score over' })
     void $.ui.open({ id: PANE, title: TITLE })
 
     $.clock.every(400, () => {
@@ -949,6 +1187,13 @@ export const register: Register = on => {
 
       return { text: `점수를 리셋했습니다 (${coins(b.balance)}코인 → 0)` }
     }
+    if (verb === 'goal' || verb === '목표') {
+      const b = await read($, board)
+      await update($, board, cur => nearGoal(cur))
+      await save($)
+
+      return { text: `확인용: 코인을 ${coins(Math.max(b.balance, nearGoal(b).balance))}으로 채웠습니다. 목표까지 20코인, 공 한두 개면 달성합니다 (코인을 지우려면 /pachinko reset)` }
+    }
     if (verb === 'drop' || verb === '발사') {
       const words = [what, ...rest].filter((w): w is string => !!w)
       const n = Math.min(MAX_LAUNCH, Math.max(1, Number(words.find(w => /^\d+$/.test(w)) ?? 1)))
@@ -962,7 +1207,8 @@ export const register: Register = on => {
     return {
       text:
         `파칭코: ${coins(b.balance)} 코인 · 공 ${coins(b.totalBalls)}개 · 잭팟 ${b.jackpots}번 · 찬스 ${b.kakuhens}번 · 최고 한 방 ${coins(b.best)}\n` +
-        goalLine(b),
+        `${goalLine(b)}
+${dataLine(b)}`,
     }
   })
 
@@ -1064,7 +1310,7 @@ export const register: Register = on => {
       if (cache.key !== key) cache = { key, svg: buildBoard(b, now) }
       // The pane's px: its cells over the code font's advance (about 7.8 px) and line height (about 19.5 px),
       // less the text lines and buttons around the board.
-      const around = 10
+      const around = 11
       const room = Math.max(200, Math.round((rows - around) * 19.5))
       const width = Math.max(160, Math.min(Math.round(cols * 7.8), Math.round((room * W) / H)))
       const height = Math.round((width * H) / W)
@@ -1073,6 +1319,7 @@ export const register: Register = on => {
         <Box flexDirection="column">
           <Text bold>{top}</Text>
           <Text color="#a9bacb">{goalLine(b)}</Text>
+          <Text dimColor>{dataLine(b)}</Text>
           <Text color={statusColor} dimColor={!statusColor}>
             {status}
           </Text>
@@ -1106,6 +1353,8 @@ export const register: Register = on => {
       <Box flexDirection="column">
         <Text bold>{top}</Text>
         <Text color="#a9bacb">{goalLine(b)}</Text>
+        <Text dimColor>{dataLine(b)}</Text>
+        {holdLine(b, now) ? <Text>{holdLine(b, now)}</Text> : null}
         <Text color={statusColor} dimColor={!statusColor}>
           {status}
         </Text>
